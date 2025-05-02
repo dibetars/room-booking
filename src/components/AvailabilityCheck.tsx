@@ -22,7 +22,7 @@ const AvailabilityCheck = () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/check-availability`,
+        'http://localhost:3001/api/check-availability',
         {
           arrivalDate,
           departureDate,

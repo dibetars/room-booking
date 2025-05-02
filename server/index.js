@@ -4,20 +4,15 @@ const cors = require('cors');
 const axios = require('axios');
 
 const app = express();
+const port = process.env.PORT || 3001;
 
 // Enable CORS for your frontend
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true
+  origin: 'http://localhost:5173' // Updated frontend URL
 }));
 
 // Parse JSON bodies
 app.use(express.json());
-
-// Health check endpoint
-app.get('/', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
-});
 
 // Proxy endpoint for Smoobu availability check
 app.post('/api/check-availability', async (req, res) => {
@@ -65,13 +60,6 @@ app.get('/api/room-details/:apartmentId', async (req, res) => {
   }
 });
 
-// For local development
-if (process.env.NODE_ENV !== 'production') {
-  const port = process.env.PORT || 3001;
-  app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-  });
-}
-
-// Export the Express API
-module.exports = app; 
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+}); 
