@@ -6,7 +6,7 @@ A React-based room booking application that integrates Smoobu for room managemen
 ## Technical Stack
 - **Frontend**: React with TypeScript
 - **Build Tool**: Vite
-- **Payment Gateway**: Paystack (Direct Charge API for Mobile Money)
+- **Payment Gateway**: Paystack (Direct Charge API for Mobile Money and Card Payments)
 - **Booking System**: Smoobu
 - **Currency**: Ghana Cedis (GHS) with live exchange rate
 - **Backend**: Express.js with Node.js
@@ -45,7 +45,12 @@ public/
 │   ├── cultural.jpg
 │   ├── cape.jpg
 │   ├── surf.jpg
-│   └── rooftop.jpg
+│   ├── Bgsec4.jpg
+│   ├── terra.jpg
+│   └── rooms/
+│       ├── StandardRoom.jpg
+│       ├── DeluxeRoom.jpg
+│       └── FamilyRoom.jpg
 └── videos/
     └── hero-background.mp4
 ```
@@ -65,7 +70,7 @@ public/
 - About section with image and text
 - Rooms section with card layout
 - Amenities section with interactive cards
-- Contact section with booking integration
+- Contact section with booking integration and terra.jpg background
 
 ### 3. BookingModal Component
 - Three-step booking process:
@@ -79,15 +84,16 @@ public/
   - Responsive grid (3 columns on desktop, 2 on tablet, 1 on mobile)
   - Detailed room information display
   - Live exchange rate conversion
-  - Direct Paystack Charge API integration for mobile money
+  - Paystack integration for both mobile money and card payments
+  - Three-column payment form layout
+  - Real-time payment status updates
 
 ### 4. Footer Component
-- Black background design
-- Four-column layout
-- Logo and description section
-- Book Now button with smooth scroll
-- Social media icons with hover effects
-- Separator with main color
+- Clean, modern design
+- Three-column layout
+- Contact information
+- Quick links
+- Social media links
 - Copyright notice
 - Responsive design
 
@@ -104,6 +110,8 @@ public/
 - Smooth transitions and animations
 - Font Awesome social media icons
 - Enhanced logo visibility
+- Three-column payment form layout
+- Background image integration (Bgsec4.jpg, terra.jpg)
 
 ### 2. Amenities Section
 - Interactive card layout with:
@@ -154,17 +162,23 @@ public/
   - Error handling and logging
 
 ### 5. Payment Processing
-- Direct Paystack Charge API integration:
+- Paystack integration:
   - Mobile money payment support:
     - Vodafone Cash (vod)
     - MTN Mobile Money (mtn)
     - AirtelTigo Money (atl)
+  - Card payment support
   - Payment flow:
-    1. User enters email and phone number
-    2. Selects mobile money provider
-    3. Receives payment prompt on phone
-    4. System polls for payment status
-    5. Automatic confirmation on success
+    1. User enters email
+    2. Selects payment method (Mobile Money/Card)
+    3. For Mobile Money:
+       - Enters phone number
+       - Selects provider
+       - Receives payment prompt
+    4. For Card:
+       - Paystack popup for secure processing
+    5. System polls for payment status
+    6. Automatic confirmation on success
   - Features:
     - Real-time payment status updates
     - Error handling and user feedback
@@ -172,6 +186,7 @@ public/
     - Automatic modal closure on success
     - 5-minute payment timeout
     - Detailed error messages
+    - Three-column payment form layout
 
 ## Technical Implementation
 
@@ -194,6 +209,7 @@ public/
 - Card hover effects
 - Enhanced logo sizing
 - Three-column grid system
+- Background image integration
 
 ### Paystack Integration
 ```typescript
@@ -210,12 +226,19 @@ class PaymentService {
     provider: 'vod' | 'mtn' | 'atl'
   ): Promise<PaymentResponse>
   
+  // Card payment initiation
+  public async initiateCardPayment(
+    email: string,
+    amount: number
+  ): Promise<PaymentResponse>
+  
   // Payment verification
   public async verifyPayment(reference: string): Promise<PaymentResponse>
 }
 ```
 - Direct Charge API integration
 - Mobile money provider support
+- Card payment support
 - Payment status polling
 - Error handling and logging
 - Type safety with TypeScript
@@ -314,6 +337,9 @@ Required environment variables:
 - Room prices are in USD but displayed in both USD and GHS
 - Payment processing is in GHS (converted from USD)
 - Mobile money payments require phone number and provider selection
+- Card payments use Paystack's secure iframe
 - Payment status is polled every 5 seconds
 - Payment timeout after 5 minutes
-- Navbar logo is 80px tall on desktop and 70px on mobile 
+- Navbar logo is 80px tall on desktop and 70px on mobile
+- Contact section uses terra.jpg as background
+- Payment form uses three-column layout 
