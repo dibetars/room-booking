@@ -8,7 +8,11 @@ const port = process.env.PORT || 3001;
 
 // Enable CORS for your frontend
 app.use(cors({
-  origin: 'http://localhost:5173' // Updated frontend URL
+  origin: [
+    'http://localhost:5173',
+    'https://*.vercel.app',
+    process.env.FRONTEND_URL
+  ].filter(Boolean)
 }));
 
 // Parse JSON bodies
