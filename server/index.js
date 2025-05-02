@@ -4,7 +4,6 @@ const cors = require('cors');
 const axios = require('axios');
 
 const app = express();
-const port = process.env.PORT || 3001;
 
 // Enable CORS for your frontend
 app.use(cors({
@@ -61,6 +60,13 @@ app.get('/api/room-details/:apartmentId', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-}); 
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  const port = process.env.PORT || 3001;
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+}
+
+// Export the Express API
+module.exports = app; 
