@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 
 class ExchangeRateService {
   private static instance: ExchangeRateService;
