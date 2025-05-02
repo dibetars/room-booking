@@ -3,14 +3,14 @@ import axios from 'axios';
 
 class ExchangeRateService {
   private static instance: ExchangeRateService;
-  private currentRate: number = 14.3; // Fallback rate
-  private lastUpdated: Date = new Date();
-  private cacheDuration: number = 1000 * 60 * 60; // 1 hour cache
+  private readonly API_KEY = import.meta.env.VITE_EXCHANGE_RATE_API_KEY;
+  private readonly API_URL = 'https://v6.exchangerate-api.com/v6';
+  private currentRate: number = 14.3; // Default fallback rate
+  private lastUpdate: number = 0;
+  private readonly UPDATE_INTERVAL = 3600000; // 1 hour in milliseconds
 
   private constructor() {
-    this.fetchExchangeRate();
-    // Update rate every hour
-    setInterval(() => this.fetchExchangeRate(), this.cacheDuration);
+    this.updateRate();
   }
 
   public static getInstance(): ExchangeRateService {
@@ -20,29 +20,26 @@ class ExchangeRateService {
     return ExchangeRateService.instance;
   }
 
-  private async fetchExchangeRate(): Promise<void> {
+  private async updateRate() {
     try {
-      // Using ExchangeRate-API
-      const response = await axios.get(
-        `https://v6.exchangerate-api.com/v6/f64ee8e437de8f60b400f5d5/pair/USD/GHS`
-      );
-
-      if (response.data && response.data.conversion_rate) {
-        this.currentRate = response.data.conversion_rate;
-        this.lastUpdated = new Date();
+      const response = await fetch(`${this.API_URL}/${this.API_KEY}/pair/USD/GHS`);
+      const data = await response.json();
+      
+      if (data.result === 'success') {
+        this.currentRate = data.conversion_rate;
+        this.lastUpdate = Date.now();
       }
     } catch (error) {
-      console.error('Error fetching exchange rate:', error);
-      // Fallback to the last known rate
+      console.error('Error updating exchange rate:', error);
     }
   }
 
   public getCurrentRate(): number {
+    const now = Date.now();
+    if (now - this.lastUpdate > this.UPDATE_INTERVAL) {
+      this.updateRate();
+    }
     return this.currentRate;
-  }
-
-  public getLastUpdated(): Date {
-    return this.lastUpdated;
   }
 
   public async convertUSDToGHS(usdAmount: number): Promise<number> {

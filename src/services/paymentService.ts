@@ -33,8 +33,8 @@ interface PaymentResponse {
 
 class PaymentService {
   private static instance: PaymentService;
-  private readonly PAYSTACK_SECRET_KEY = 'sk_live_ee13d5a26dc8668ae9b2ed4531d577576426c5e6';
-  private readonly PAYSTACK_PUBLIC_KEY = 'pk_live_f6db4218ed33ec88b22eb3ff0a73cc4c699bd611';
+  private readonly PAYSTACK_SECRET_KEY = import.meta.env.VITE_PAYSTACK_SECRET_KEY;
+  private readonly PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
   private readonly PAYSTACK_API_URL = 'https://api.paystack.co';
 
   private constructor() {}
