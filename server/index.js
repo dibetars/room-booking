@@ -7,12 +7,17 @@ const app = express();
 
 // Enable CORS for your frontend
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL || '*',
   credentials: true
 }));
 
 // Parse JSON bodies
 app.use(express.json());
+
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running' });
+});
 
 // Proxy endpoint for Smoobu availability check
 app.post('/api/check-availability', async (req, res) => {
