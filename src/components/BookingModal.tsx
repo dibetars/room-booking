@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import './BookingModal.css';
-import axios from 'axios';
 import ExchangeRateService from '../services/exchangeRateService';
 import PaymentService from '../services/paymentService';
 
@@ -45,17 +44,6 @@ interface RoomDetails {
     id: number;
     name: string;
   };
-}
-
-interface PriceElement {
-  amount: number;
-  currencyCode: string;
-  name: string;
-  type: string;
-  additionalInfo?: any;
-  quantity?: number;
-  sortOrder: number;
-  tax?: any;
 }
 
 interface Room {

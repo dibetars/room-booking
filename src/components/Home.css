@@ -160,7 +160,10 @@ h1, h2, h3, h4, h5, h6, p, a, button, span {
 .typing-text {
   font-size: 3rem;
   margin-bottom: 30px;
-  line-height: 1.2;
+  line-height: 1.4;
+  white-space: normal;
+  overflow: visible;
+  text-align: center;
 }
 
 /* Starlink Announcement */
@@ -602,14 +605,19 @@ h1, h2, h3, h4, h5, h6, p, a, button, span {
 
 /* Typing Animation */
 @keyframes typing {
-  from { width: 0 }
-  to { width: 100% }
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .typing-text {
-  overflow: hidden;
-  white-space: nowrap;
-  animation: typing 3.5s steps(40, end);
+  animation: typing 1s ease-out forwards;
+  opacity: 0;
 }
 
 /* Section Styles */

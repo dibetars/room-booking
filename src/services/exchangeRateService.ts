@@ -1,9 +1,5 @@
 import axios from 'axios';
 
-interface ExchangeRateResponse {
-  rate: number;
-  lastUpdated: string;
-}
 
 class ExchangeRateService {
   private static instance: ExchangeRateService;
