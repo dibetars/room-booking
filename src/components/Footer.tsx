@@ -2,44 +2,35 @@ import React from 'react';
 import './Footer.css';
 
 const Footer = () => {
-  const scrollToHero = () => {
-    const heroSection = document.querySelector('.hero');
-    if (heroSection) {
-      heroSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <footer className="footer">
       <div className="footer-content">
         <div className="footer-section">
-          <div className="footer-column">
-            <div className="footer-logo">
-              <img src="/images/Boko-Logo.png" alt="BokoBoko Logo" />
-            </div>
-            <p className="footer-description">
-              At BokoBoko, Living with Nature is our way of life.
-            </p>
-            <button className="footer-book-now" onClick={scrollToHero}>
-              Book Now
-            </button>
-            <div className="social-icons">
-              <a href="https://www.facebook.com/OPCGH/" target="_blank" rel="noopener noreferrer">
-                <i className="fab fa-facebook"></i>
-              </a>
-              <a href="https://www.instagram.com/bokobokoopc_" target="_blank" rel="noopener noreferrer">
-                <i className="fab fa-instagram"></i>
-              </a>
-            </div>
+          <h3>Contact Us</h3>
+          <p>Email: info@bokoboko.com</p>
+          <p>Phone: +233 20 123 4567</p>
+          <p>Address: Accra, Ghana</p>
+        </div>
+        <div className="footer-section">
+          <h3>Quick Links</h3>
+          <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/rooms">Rooms</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/contact">Contact</a></li>
+          </ul>
+        </div>
+        <div className="footer-section">
+          <h3>Follow Us</h3>
+          <div className="social-links">
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">Facebook</a>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">Twitter</a>
           </div>
-          <div className="footer-column"></div>
-          <div className="footer-column"></div>
-          <div className="footer-column"></div>
         </div>
       </div>
-      <div className="footer-separator"></div>
-      <div className="footer-copyright">
-        Copyright © 2025 Boko Boko | All Rights Reserved
+      <div className="footer-bottom">
+        <p>&copy; {new Date().getFullYear()} BokoBoko. All rights reserved.</p>
       </div>
     </footer>
   );

@@ -58,12 +58,6 @@ interface PriceElement {
   tax?: any;
 }
 
-interface Price {
-  price: number;
-  currency: string;
-  priceElements: PriceElement[];
-}
-
 interface Room {
   id: number;
   name: string;
@@ -88,8 +82,6 @@ declare global {
     PaystackPop: any;
   }
 }
-
-const PAYSTACK_PUBLIC_KEY = 'pk_live_f6db4218ed33ec88b22eb3ff0a73cc4c699bd611';
 
 // Map of room IDs to their images
 const roomImages: { [key: number]: string } = {
@@ -132,13 +124,11 @@ const BookingModal = ({ isOpen, onClose }: BookingModalProps) => {
   const [bookingDetails, setBookingDetails] = useState<any>(null);
   const [arrivalDate, setArrivalDate] = useState('');
   const [departureDate, setDepartureDate] = useState('');
-  const [availabilityData, setAvailabilityData] = useState<any>(null);
   const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [loadingDetails, setLoadingDetails] = useState<{ [key: number]: boolean }>({});
   const [exchangeRate, setExchangeRate] = useState<number>(14.3); // Default fallback rate
   const [paymentFormData, setPaymentFormData] = useState<PaymentFormData>({
     email: '',
@@ -161,17 +151,6 @@ const BookingModal = ({ isOpen, onClose }: BookingModalProps) => {
 
     return () => clearInterval(interval);
   }, []);
-
-  const fetchRoomDetails = async (apartmentId: number) => {
-    try {
-      const response = await axios.get(`http://localhost:3001/api/room-details/${apartmentId}`);
-      console.log('Room details response:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching room details:', error);
-      return null;
-    }
-  };
 
   const handleAvailabilityCheck = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -324,7 +303,7 @@ const BookingModal = ({ isOpen, onClose }: BookingModalProps) => {
           amount: Math.round(amountInGHS * 100), // Convert to pesewas
           currency: 'GHS',
           ref: `${Math.ceil(Math.random() * 1000000000)}`,
-          callback: (response: any) => {
+          callback: () => {
             setPaymentStatus('Payment successful!');
             setTimeout(() => onClose(), 2000);
           },
