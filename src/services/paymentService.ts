@@ -9,17 +9,6 @@ interface MobileMoneyPayment {
   };
 }
 
-interface CardPayment {
-  email: string;
-  amount: number;
-  card: {
-    number: string;
-    cvv: string;
-    expiry_month: string;
-    expiry_year: string;
-  };
-}
-
 interface PaymentResponse {
   status: boolean;
   message: string;
