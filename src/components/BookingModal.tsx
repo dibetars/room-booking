@@ -495,17 +495,6 @@ const BookingModal = ({ isOpen, onClose }: BookingModalProps) => {
               
               <form onSubmit={handlePaymentSubmit} className="payment-form">
                 <div className="form-group full-width">
-                  <label htmlFor="email">Email:</label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={paymentFormData.email}
-                    onChange={(e) => setPaymentFormData(prev => ({ ...prev, email: e.target.value }))}
-                    required
-                  />
-                </div>
-
-                <div className="form-group full-width">
                   <label>Payment Method:</label>
                   <div className="payment-method-selector">
                     <button
@@ -523,6 +512,17 @@ const BookingModal = ({ isOpen, onClose }: BookingModalProps) => {
                       Card Payment
                     </button>
                   </div>
+                </div>
+
+                <div className="form-group full-width">
+                  <label htmlFor="email">Email:</label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={paymentFormData.email}
+                    onChange={(e) => setPaymentFormData(prev => ({ ...prev, email: e.target.value }))}
+                    required
+                  />
                 </div>
 
                 {paymentFormData.paymentMethod === 'momo' && (
