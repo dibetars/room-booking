@@ -126,6 +126,8 @@ const BookingModal = ({ isOpen, onClose }: BookingModalProps) => {
   });
   const [paymentStatus, setPaymentStatus] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentReference, setPaymentReference] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     // Initialize exchange rate service
@@ -243,6 +245,7 @@ const BookingModal = ({ isOpen, onClose }: BookingModalProps) => {
 
     setIsProcessing(true);
     setPaymentStatus('Processing payment...');
+    setPaymentReference(null);
 
     try {
       const paymentService = PaymentService.getInstance();
@@ -258,54 +261,52 @@ const BookingModal = ({ isOpen, onClose }: BookingModalProps) => {
         );
 
         if (response.status) {
+          setPaymentReference(response.data.reference);
           setPaymentStatus('Payment initiated. Please check your phone for the payment prompt.');
-          
-          // Start polling for payment status
-          const pollInterval = setInterval(async () => {
-            try {
-              const verificationResponse = await paymentService.verifyPayment(response.data.reference);
-              
-              if (verificationResponse.data.status === 'success') {
-                clearInterval(pollInterval);
-                setPaymentStatus('Payment successful!');
-                setTimeout(() => onClose(), 2000);
-              } else if (verificationResponse.data.status === 'failed') {
-                clearInterval(pollInterval);
-                setPaymentStatus('Payment failed. Please try again.');
-              }
-            } catch (error) {
-              console.error('Payment verification error:', error);
-            }
-          }, 5000); // Poll every 5 seconds
-
-          // Clear interval after 5 minutes (timeout)
-          setTimeout(() => clearInterval(pollInterval), 300000);
         } else {
           setPaymentStatus('Failed to initiate payment. Please try again.');
         }
       } else {
-        // Card payment
-        const handler = window.PaystackPop.setup({
-          key: paymentService.getPublicKey(),
-          email: paymentFormData.email,
-          amount: Math.round(amountInGHS * 100), // Convert to pesewas
-          currency: 'GHS',
-          ref: `${Math.ceil(Math.random() * 1000000000)}`,
-          callback: () => {
-            setPaymentStatus('Payment successful!');
-            setTimeout(() => onClose(), 2000);
-          },
-          onClose: () => {
-            setPaymentStatus('Payment cancelled. Please try again.');
-          }
-        });
-        handler.openIframe();
+        // Card payment using redirect
+        await paymentService.initiateCardPayment(
+          paymentFormData.email,
+          amountInGHS
+        );
+        // The redirect will happen automatically in the service
       }
     } catch (error) {
       console.error('Payment error:', error);
       setPaymentStatus('An error occurred. Please try again.');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleVerifyPayment = async () => {
+    if (!paymentReference) return;
+
+    setIsVerifying(true);
+    setPaymentStatus('Verifying payment...');
+
+    try {
+      const paymentService = PaymentService.getInstance();
+      const response = await paymentService.verifyPayment(paymentReference);
+
+      if (response.data.status === 'success') {
+        setPaymentStatus('Payment successful!');
+        setPaymentReference(null);
+        setTimeout(() => onClose(), 2000);
+      } else if (response.data.status === 'failed') {
+        setPaymentStatus('Payment failed. Please try again.');
+        setPaymentReference(null);
+      } else {
+        setPaymentStatus('Payment is still pending. Please check your phone and try again.');
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      setPaymentStatus('Error verifying payment. Please try again.');
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -563,8 +564,20 @@ const BookingModal = ({ isOpen, onClose }: BookingModalProps) => {
               </form>
               
               {paymentStatus && (
-                <div className={`payment-status ${isProcessing ? 'processing' : ''}`}>
+                <div className={`payment-status ${isProcessing || isVerifying ? 'processing' : ''}`}>
                   {paymentStatus}
+                </div>
+              )}
+
+              {paymentReference && paymentFormData.paymentMethod === 'momo' && (
+                <div className="verify-payment-section">
+                  <button
+                    onClick={handleVerifyPayment}
+                    className="verify-button"
+                    disabled={isVerifying}
+                  >
+                    {isVerifying ? 'Verifying...' : 'Verify Payment'}
+                  </button>
                 </div>
               )}
             </div>

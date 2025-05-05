@@ -28,6 +28,7 @@ interface PaymentResponse {
     status: string;
     gateway_response: string;
     authorization_url?: string;
+    amount: number;
   };
 }
 
@@ -82,24 +83,18 @@ class PaymentService {
 
   public async initiateCardPayment(
     email: string,
-    amount: number,
-    card: {
-      number: string;
-      cvv: string;
-      expiry_month: string;
-      expiry_year: string;
-    }
+    amount: number
   ): Promise<PaymentResponse> {
     try {
-      const paymentData: CardPayment = {
-        email,
-        amount: Math.round(amount * 100), // Convert to pesewas
-        card
-      };
-
       const response = await axios.post(
-        `${this.PAYSTACK_API_URL}/charge`,
-        paymentData,
+        `${this.PAYSTACK_API_URL}/transaction/initialize`,
+        {
+          email,
+          amount: Math.round(amount * 100), // Convert to pesewas
+          currency: 'GHS',
+          callback_url: import.meta.env.VITE_PAYSTACK_CALLBACK_URL || `${window.location.origin}/payment-callback`,
+          reference: `${Math.ceil(Math.random() * 1000000000)}`
+        },
         {
           headers: {
             'Authorization': `Bearer ${this.PAYSTACK_SECRET_KEY}`,
@@ -107,6 +102,11 @@ class PaymentService {
           }
         }
       );
+
+      if (response.data.status && response.data.data.authorization_url) {
+        // Redirect to Paystack payment page
+        window.location.href = response.data.data.authorization_url;
+      }
 
       return response.data;
     } catch (error: any) {

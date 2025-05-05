@@ -221,21 +221,24 @@
 .book-now-button {
   width: 100%;
   padding: 0.75rem;
-  background: #007bff;
+  background: var(--main-color);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  font-weight: 500;
 }
 
 .book-now-button:hover {
-  background: #0056b3;
+  background: var(--main-color-dark, #0056b3);
+  transform: translateY(-1px);
 }
 
 .book-now-button:disabled {
   background: #ccc;
   cursor: not-allowed;
+  transform: none;
 }
 
 /* Form Styles */
@@ -264,16 +267,24 @@
 .check-button {
   width: 100%;
   padding: 0.75rem;
-  background: #007bff;
+  background: var(--main-color);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.check-button:hover {
+  background: var(--main-color-dark, #0056b3);
+  transform: translateY(-1px);
 }
 
 .check-button:disabled {
   background: #ccc;
   cursor: not-allowed;
+  transform: none;
 }
 
 /* Payment Styles */
@@ -345,18 +356,20 @@
   grid-column: 1 / -1;
   width: 100%;
   padding: 1rem;
-  background: #28a745;
+  background: var(--main-color);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 1.1rem;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
   margin-top: 1rem;
+  font-weight: 500;
 }
 
 .pay-button:hover {
-  background: #218838;
+  background: var(--main-color-dark, #0056b3);
+  transform: translateY(-1px);
 }
 
 /* Error Message */
@@ -390,15 +403,18 @@
 
 .back-button {
   padding: 0.5rem 1rem;
-  background: #6c757d;
-  color: white;
-  border: none;
+  background: #f8f9fa;
+  color: var(--main-color);
+  border: 1px solid var(--main-color);
   border-radius: 4px;
   cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
 }
 
 .back-button:hover {
-  background: #5a6268;
+  background: var(--main-color);
+  color: white;
 }
 
 .room-header {
@@ -411,20 +427,24 @@
 .details-button {
   padding: 0.5rem 1rem;
   background: #f8f9fa;
-  border: 1px solid #ddd;
+  border: 1px solid var(--main-color);
+  color: var(--main-color);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .details-button:hover {
-  background: #e9ecef;
-  border-color: #ced4da;
+  background: var(--main-color);
+  color: white;
 }
 
 .details-button:disabled {
   background: #e9ecef;
+  border-color: #ced4da;
+  color: #6c757d;
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -566,12 +586,14 @@
 .payment-method-btn {
   flex: 1;
   padding: 1rem;
-  border: 2px solid #ddd;
+  border: 2px solid var(--main-color);
   border-radius: 8px;
-  background: white;
+  background: #000;
+  color: white;
   cursor: pointer;
   font-size: 1rem;
   transition: all 0.3s ease;
+  font-weight: 500;
 }
 
 .payment-method-btn.active {
@@ -582,7 +604,8 @@
 
 .payment-method-btn:hover:not(.active) {
   border-color: var(--main-color);
-  background: #fff5f2;
+  background: #333;
+  color: white;
 }
 
 .payment-status {
@@ -656,4 +679,31 @@
   .pay-button {
     grid-column: 1;
   }
+}
+
+.verify-payment-section {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.verify-button {
+  background-color: var(--main-color);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+  width: 100%;
+  max-width: 200px;
+}
+
+.verify-button:hover:not(:disabled) {
+  background-color: #a55a3d;
+}
+
+.verify-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 } 

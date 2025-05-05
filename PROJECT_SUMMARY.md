@@ -58,11 +58,16 @@ public/
 ## Key Components
 
 ### 1. Layout Component
-- Transparent navbar with scroll effect
-- Large logo (80px height on desktop, 70px on mobile)
-- Responsive navigation
+- Fixed transparent navbar with scroll effect
+- Large logo (60px height)
+- Responsive navigation with hamburger menu for mobile
+- Mobile menu features:
+  - Smooth slide-down animation
+  - Full-width menu items
+  - Close on link click
+  - High contrast for better visibility
 - Dynamic background color on scroll
-- Sticky positioning
+- Sticky positioning with proper z-index
 
 ### 2. Home Component
 - Hero section with video background
@@ -90,10 +95,14 @@ public/
 
 ### 4. Footer Component
 - Clean, modern design
-- Three-column layout
-- Contact information
-- Quick links
-- Social media links
+- Four-column layout
+- First column contains:
+  - BokoBoko logo
+  - Tagline "At BokoBoko, Living with Nature is our way of life"
+  - Book Now button
+  - Social media icons (Facebook and Instagram)
+- Three empty columns for future content
+- Separator with 2px main color
 - Copyright notice
 - Responsive design
 
@@ -112,6 +121,7 @@ public/
 - Enhanced logo visibility
 - Three-column payment form layout
 - Background image integration (Bgsec4.jpg, terra.jpg)
+- Mobile-first navigation with hamburger menu
 
 ### 2. Amenities Section
 - Interactive card layout with:
@@ -210,6 +220,7 @@ public/
 - Enhanced logo sizing
 - Three-column grid system
 - Background image integration
+- Mobile-first navigation styles
 
 ### Paystack Integration
 ```typescript
@@ -309,7 +320,11 @@ GET /api/room-details/:apartmentId
     "axios": "^1.6.0",
     "express": "^4.18.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.0.0"
+    "dotenv": "^16.0.0",
+    "@fortawesome/react-fontawesome": "^0.2.0",
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/free-brands-svg-icons": "^6.7.2"
   },
   "devDependencies": {
     "typescript": "~5.7.2",
@@ -340,6 +355,7 @@ Required environment variables:
 - Card payments use Paystack's secure iframe
 - Payment status is polled every 5 seconds
 - Payment timeout after 5 minutes
-- Navbar logo is 80px tall on desktop and 70px on mobile
+- Navbar logo is 60px tall
 - Contact section uses terra.jpg as background
-- Payment form uses three-column layout 
+- Payment form uses three-column layout
+- Mobile navigation uses hamburger menu with smooth animations 
