@@ -11,8 +11,12 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'https://*.vercel.app',
+    'https://bokoboko.org',
+    'https://www.bokoboko.org',
     process.env.FRONTEND_URL
-  ].filter(Boolean)
+  ].filter(Boolean),
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Parse JSON bodies
