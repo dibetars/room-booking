@@ -255,13 +255,48 @@
   display: block;
   margin-bottom: 0.5rem;
   color: #333;
+  font-weight: 500;
 }
 
-.form-group input {
+.form-group input[type="date"] {
   width: 100%;
-  padding: 0.5rem;
+  padding: 1rem;
   border: 1px solid #ddd;
   border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: white;
+  color: #333;
+  transition: all 0.3s ease;
+  position: relative;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.form-group input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: auto;
+  color: transparent;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+
+.form-group input[type="date"]:focus {
+  outline: none;
+  border-color: #000;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+.form-group input[type="date"]:hover {
+  border-color: #666;
 }
 
 .check-button {
