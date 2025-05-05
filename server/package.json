@@ -40,6 +40,8 @@
     "escape-html": "^1.0.3",
     "etag": "^1.8.1",
     "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-validator": "^7.2.1",
     "fetch-blob": "^3.2.0",
     "fill-range": "^7.1.1",
     "finalhandler": "^1.3.1",
@@ -54,6 +56,7 @@
     "has-flag": "^3.0.0",
     "has-symbols": "^1.1.0",
     "hasown": "^2.0.2",
+    "helmet": "^8.1.0",
     "http-errors": "^2.0.0",
     "iconv-lite": "^0.4.24",
     "ignore-by-default": "^1.0.1",
@@ -110,11 +113,11 @@
     "unpipe": "^1.0.0",
     "utils-merge": "^1.0.1",
     "vary": "^1.1.2",
-    "web-streams-polyfill": "^3.3.3"
+    "web-streams-polyfill": "^3.3.3",
+    "winston": "^3.17.0"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {},
   "description": ""
 }
