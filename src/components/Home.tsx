@@ -232,7 +232,7 @@ const Home = () => {
               <h2>Book Your Eco-Getaway with us!</h2>
               <p>Escape the hustle and bustle of life and embark on a journey of eco-friendly discovery at our guest house.</p>
               <div className="contact-details">
-                <p>Phone: 0598641683</p>
+                <p>Phone: +233 25 607 8747</p>
                 <p>Address: Busua, Western Region, Ghana</p>
                 <p>Email: info@bokoboko.org</p>
               </div>
