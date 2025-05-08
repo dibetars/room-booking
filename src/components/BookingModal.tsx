@@ -75,7 +75,6 @@ declare global {
 const roomImages: { [key: number]: string } = {
   2634263: '/images/rooms/StandardRoom.jpg',  // Room 1
   2509568: '/images/rooms/StandardRoom.jpg',  // Room 2
-  2644078: '/images/rooms/DeluxeRoom.jpg',    // Room 3
   2634338: '/images/rooms/StandardRoom.jpg',  // Room 3a
   2634343: '/images/rooms/StandardRoom.jpg',  // Room 3b
   2509563: '/images/rooms/FamilyRoom.jpg',    // Room 4
@@ -85,21 +84,19 @@ const roomImages: { [key: number]: string } = {
 
 // Map of room IDs to their names
 const roomNames: { [key: number]: string } = {
-  2634263: 'Room 1',
-  2509568: 'Room 2',
-  2644078: 'Room 3',
-  2634338: 'Room 3a',
-  2634343: 'Room 3b',
-  2509563: 'Room 4',
-  2509578: 'Room 5',
-  2509573: 'Room 6'
+  2634263: 'Patient',      // Room 1
+  2509568: 'Regeneration', // Room 2
+  2634338: 'Generosity',   // Room 3a
+  2634343: 'Love',         // Room 3b
+  2509563: 'Humility',     // Room 4
+  2509578: 'Truth',        // Room 5
+  2509573: 'Wisdom'        // Room 6
 };
 
 // Map of room IDs to their base prices
 const roomBasePrices: { [key: number]: number } = {
   2634263: 35, // Room 1 - Deluxe Room with AC
   2509568: 35, // Room 2 - Deluxe Room with AC
-  2644078: 40, // Room 3 - Family Room
   2634338: 30, // Room 3a - Standard Room
   2634343: 30, // Room 3b - Standard Room
   2509563: 30, // Room 4 - Standard Room
@@ -177,6 +174,9 @@ const BookingModal = ({ isOpen, onClose }: BookingModalProps) => {
         
         const rooms: Room[] = data.availableApartments
           .filter((apartmentId: number) => {
+            // Filter out Room 3 (ID: 2644078)
+            if (apartmentId === 2644078) return false;
+            
             const hasPrice = data.prices[apartmentId] && typeof data.prices[apartmentId].price === 'number';
             if (!hasPrice) {
               console.warn(`No valid price data found for apartment ${apartmentId}`);

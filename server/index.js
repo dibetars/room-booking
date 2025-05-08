@@ -68,6 +68,7 @@ app.use(cors({
     'https://*.vercel.app',
     'https://bokoboko.org',
     'https://www.bokoboko.org',
+    'https://n0wks0o0wskog00c0gwk4cc8.obrobibini.com',
     process.env.FRONTEND_URL
   ].filter(Boolean),
   methods: ['GET', 'POST', 'OPTIONS'],
@@ -110,6 +111,7 @@ const validateAvailabilityRequest = [
 // Proxy endpoint for Smoobu availability check
 app.post('/api/check-availability', validateAvailabilityRequest, async (req, res, next) => {
   try {
+    console.log(req.body);
     const response = await axios.post(
       'https://login.smoobu.com/booking/checkApartmentAvailability',
       req.body,
