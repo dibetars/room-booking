@@ -84,13 +84,13 @@ const roomImages: { [key: number]: string } = {
 
 // Map of room IDs to their names
 const roomNames: { [key: number]: string } = {
-  2634263: 'Patient',      // Room 1
-  2509568: 'Regeneration', // Room 2
-  2634338: 'Generosity',   // Room 3a
-  2634343: 'Love',         // Room 3b
-  2509563: 'Humility',     // Room 4
-  2509578: 'Truth',        // Room 5
-  2509573: 'Wisdom'        // Room 6
+  2634263: 'Patient Room',      // Room 1
+  2509568: 'Regeneration Room', // Room 2
+  2634338: 'Generosity Room',   // Room 3a
+  2634343: 'Love Room',         // Room 3b
+  2509563: 'Humility Room',     // Room 4
+  2509578: 'Truth Room',        // Room 5
+  2509573: 'Wisdom Room'        // Room 6
 };
 
 // Map of room IDs to their base prices

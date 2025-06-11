@@ -2,7 +2,11 @@ import './Footer.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFacebook, faInstagram } from '@fortawesome/free-brands-svg-icons';
 
-const Footer = () => {
+interface FooterProps {
+  onBookNow?: () => void;
+}
+
+const Footer = ({ onBookNow }: FooterProps) => {
   return (
     <footer className="footer">
       <div className="footer-content">
@@ -14,7 +18,7 @@ const Footer = () => {
             <p className="footer-description">
               At BokoBoko, Living with Nature is our way of life.
             </p>
-            <button className="footer-book-now">Book Now</button>
+            <button className="footer-book-now" onClick={onBookNow}>Book Now</button>
             <div className="social-icons">
               <a href="https://web.facebook.com/OPCGH" target="_blank" rel="noopener noreferrer">
                 <FontAwesomeIcon icon={faFacebook} />

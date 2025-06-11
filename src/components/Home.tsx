@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react';
 import './Home.css';
 import BookingModal from './BookingModal';
+import ExchangeRateService from '../services/exchangeRateService';
+import GoogleReviews from './GoogleReviews';
 
-const Home = () => {
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+interface HomeProps {
+  isBookingModalOpen: boolean;
+  setIsBookingModalOpen: (open: boolean) => void;
+  handleBookNow: () => void;
+}
+
+const Home = ({ isBookingModalOpen, setIsBookingModalOpen, handleBookNow }: HomeProps) => {
   const [isNavbarScrolled, setIsNavbarScrolled] = useState(false);
+  const [exchangeRate, setExchangeRate] = useState<number>(14.3); // Default fallback
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,9 +24,16 @@ const Home = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleBookNow = () => {
-    setIsBookingModalOpen(true);
-  };
+  useEffect(() => {
+    const exchangeRateService = ExchangeRateService.getInstance();
+    setExchangeRate(exchangeRateService.getCurrentRate());
+    const interval = setInterval(() => {
+      setExchangeRate(exchangeRateService.getCurrentRate());
+    }, 1000 * 60 * 60);
+    return () => clearInterval(interval);
+  }, []);
+
+  const usdToGhs = (usd: number) => Math.round(usd * exchangeRate * 100) / 100;
 
   return (
     <div className="home">
@@ -46,7 +61,7 @@ const Home = () => {
           </video>
         </div>
         <div className="hero-content">
-          <h1 className="typing-text">Eco-Friendly Accommodation built with Sustainable Comfort in mind</h1>
+          <h1 className="typing-text">Eco-Friendly accommodation built with sustainable comfort in mind</h1>
           <button className="hero-book-now" onClick={handleBookNow}>Book Now</button>
         </div>
       </section>
@@ -56,6 +71,7 @@ const Home = () => {
         <div className="container">
           <h2>We are excited to announce </h2>
           <h2>that BokoBoko now has Starlink!</h2>
+          <div style={{ height: '25px' }} />
           <button className="book-now-btn" onClick={handleBookNow}>Book Now</button>
         </div>
       </section>
@@ -70,7 +86,7 @@ const Home = () => {
             <div className="about-text">
               <h2>Living in harmony with nature isn't just a philosophy.</h2>
               <p>
-                At BokoBoko, Living with Nature is our way of life. Many of the ingredients for our meals and drinks are nurtured in our garden, a testament to our commitment to a natural cycle of growth and sustainability. Our guesthouse and furnishings are crafted using sustainable construction techniques that respect the environment. This cyclical approach allows us to offer affordable lodging while fairly compensating our staff. All profits are redirected into OPC, the NGO that initially brought BokoBoko to life. 
+                At BokoBoko, living with nature is our way of life. Many of the ingredients for our meals and drinks are nurtured in our garden, a testament to our commitment to a natural cycle of growth and sustainability. Our guesthouse and furnishings are crafted using sustainable construction techniques that respect the environment. This cyclical approach allows us to offer affordable lodging while fairly compensating our staff. All profits are redirected into OPC, the NGO that initially brought BokoBoko to life. 
               </p>
               <button className="book-now-btn" onClick={handleBookNow}>Book Now</button>
             </div>
@@ -81,7 +97,7 @@ const Home = () => {
       {/* Rooms Section */}
       <section id="rooms" className="rooms-section">
         <div className="container">
-          <h2>Guaranteed Sustainable living without compromising comfort</h2>
+          <h2>Guaranteed sustainable living without compromising comfort</h2>
           <div className="rooms-grid">
             <div className="room-card">
               <div className="room-image">
@@ -89,7 +105,7 @@ const Home = () => {
               </div>
               <div className="room-content">
                 <h3>Standard Room</h3>
-                <p>Our Standard Rooms (Room 3a, 3b, 4, and 6) come equipped with ensuite bathrooms, providing privacy and convenience. Enjoy a cozy and peaceful space with access to shared facilities. Starting at $30 per night.</p>
+                <p>Our standard rooms (Generosity Room, Love Room, Humility Room, and Wisdom Room) come equipped with ensuite bathrooms, providing privacy and convenience. Enjoy a cozy and peaceful space with access to shared rooftop terrace, kitchenette, farm-to-table dining, bar, and more. Starting at $30 (GHS {usdToGhs(30)}) per night.</p>
                 <button className="book-now-btn" onClick={handleBookNow}>Book Now</button>
               </div>
             </div>
@@ -98,8 +114,8 @@ const Home = () => {
                 <img src="/images/rooms/DeluxeRoom.jpg" alt="Deluxe Room" />
               </div>
               <div className="room-content">
-                <h3>Deluxe Room (With Air Conditioning)</h3>
-                <p>Our Deluxe Rooms (Room 1 and 2) feature natural materials, energy-efficient lighting, and thoughtful decor. Perfect for couples or solo travelers, these rooms include air conditioning for your comfort. Starting at $35 per night.</p>
+                <h3>Deluxe Room (with air conditioning)</h3>
+                <p>Our deluxe rooms (Patient Room and Regeneration Room) feature natural materials, energy-efficient lighting, and thoughtful decor. Perfect for couples or solo travelers, these rooms include air conditioning for your comfort with access to shared rooftop terrace, kitchenette, farm-to-table dining, bar, and more. Starting at $35 (GHS {usdToGhs(35)}) per night.</p>
                 <button className="book-now-btn" onClick={handleBookNow}>Book Now</button>
               </div>
             </div>
@@ -109,7 +125,7 @@ const Home = () => {
               </div>
               <div className="room-content">
                 <h3>Family Room</h3>
-                <p>For families seeking a spacious retreat, our Family Rooms (Room 3 and 5) offer ample accommodation with extra space for your loved ones to connect and unwind. Starting at $40 per night.</p>
+                <p>For families seeking a spacious retreat, our family rooms (Truth/Honesty Room) offers ample accommodation with extra space for your loved ones to connect and unwind with access to shared rooftop terrace, kitchenette, farm-to-table dining, bar, and more. Starting at $40 (GHS {usdToGhs(40)}) per night.</p>
                 <button className="book-now-btn" onClick={handleBookNow}>Book Now</button>
               </div>
             </div>
@@ -120,17 +136,17 @@ const Home = () => {
       {/* Amenities Section */}
       <section id="amenities" className="amenities-section">
         <div className="container">
-          <h2>We Offer to Our Guests</h2>
+          <h2>We offer to our guests</h2>
           <div className="amenities-grid">
             {/* Row 1: Rooftop (2 columns) and Kitchenette (1 column) */}
             <div className="amenity-card">
               <div className="card-inner">
                 <div className="card-front">
                   <img src="/images/rooftop.jpg" alt="RoofTop Terrace" />
-                  <h3>RoofTop Terrace</h3>
+                  <h3>Rooftop terrace</h3>
                 </div>
                 <div className="card-back">
-                  <p>Experience calm relaxation atop our rooftop terrace with panoramic views of the surrounding eco village and mountain ranges invite moments of reflection and tranquility. Whether you're stargazing under the night sky or basking in the warmth of the sun, this rooftop oasis offers a sanctuary for guests to unwind and connect with nature.</p>
+                  <p>Experience calm relaxation atop our rooftop terrace with panoramic views of the surrounding ecovillage and undulating hills invite moments of reflection and tranquility. Whether you're stargazing under the night sky or basking in the warmth of the sun, this rooftop oasis offers a sanctuary for guests to unwind and connect with nature.</p>
                 </div>
               </div>
             </div>
@@ -139,10 +155,10 @@ const Home = () => {
               <div className="card-inner">
                 <div className="card-front">
                   <img src="/images/kitchen.jpg" alt="Kitchenette" />
-                  <h3>Kitchenete for Culinary Exploration</h3>
+                  <h3>Kitchenette for culinary exploration</h3>
                 </div>
                 <div className="card-back">
-                  <p>For guests craving the comforts of home or wishing to explore their culinary creativity, our guest house features a convenient kitchenette. Stocked with essential cookware, utensils, and appliances, this communal space invites guests to prepare their own meals using locally sourced ingredients.</p>
+                  <p>For guests craving the comforts of home or wishing to explore their culinary creativity, our guesthouse features a convenient kitchenette. Stocked with essential cookware, utensils, and appliances, this communal space invites guests to prepare their own meals using locally sourced ingredients.</p>
                 </div>
               </div>
             </div>
@@ -152,7 +168,7 @@ const Home = () => {
               <div className="card-inner">
                 <div className="card-front">
                   <img src="/images/agro.jpg" alt="Agritourism" />
-                  <h3>Agritourism and Beyond</h3>
+                  <h3>Agritourism and beyond</h3>
                 </div>
                 <div className="card-back">
                   <p>Immerse yourself in the rhythms of rural life with hands-on experiences in organic farming, traditional crafts, and cultural exchanges. Our agritourism programs offer a unique opportunity to connect with the land and local community.</p>
@@ -164,7 +180,7 @@ const Home = () => {
               <div className="card-inner">
                 <div className="card-front">
                   <img src="/images/farm.jpg" alt="Farm-to-Table" />
-                  <h3>Farm-to-Table Breakfast</h3>
+                  <h3>Farm-to-table dining </h3>
                 </div>
                 <div className="card-back">
                   <p>Start your day with a delicious breakfast made from fresh, organic ingredients sourced directly from our garden and local farmers. Experience the true taste of farm-to-table dining.</p>
@@ -176,7 +192,7 @@ const Home = () => {
               <div className="card-inner">
                 <div className="card-front">
                   <img src="/images/local.jpg" alt="Local Brews" />
-                  <h3>Local Brews and Beyond</h3>
+                  <h3>Local brews and beyond</h3>
                 </div>
                 <div className="card-back">
                   <p>Our bar features a selection of local brews crafted by nearby artisans. Enjoy refreshing drinks while soaking in the vibrant atmosphere of our eco-friendly space.</p>
@@ -189,7 +205,7 @@ const Home = () => {
               <div className="card-inner">
                 <div className="card-front">
                   <img src="/images/cultural.jpg" alt="Cultural Experiences" />
-                  <h3>Cultural Experiences</h3>
+                  <h3>Cultural experiences</h3>
                 </div>
                 <div className="card-back">
                   <p>Immerse yourself in the rich traditions of West African hospitality and culture. Participate in local customs, music, and art that make your stay truly memorable.</p>
@@ -201,7 +217,7 @@ const Home = () => {
               <div className="card-inner">
                 <div className="card-front">
                   <img src="/images/cape.jpg" alt="Cape Coast Journey" />
-                  <h3>Cape Coast Journey</h3>
+                  <h3>Cape Coast journey</h3>
                 </div>
                 <div className="card-back">
                   <p>Embark on a historical journey through Ghana's Central Region. Explore the rich heritage and stunning landscapes that make this area unique.</p>
@@ -224,14 +240,21 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Google Reviews Section */}
+      <section id="google-reviews" className="google-reviews-section" style={{ background: '#f8f9fa', padding: '60px 0' }}>
+        <div className="container" style={{ display: 'flex', justifyContent: 'center' }}>
+          <GoogleReviews />
+        </div>
+      </section>
+
       {/* Contact Section */}
       <section id="contact" className="contact-section">
         <div className="container">
           <div className="contact-grid">
             <div className="contact-info">
-              <h2>Book Your Eco-Getaway with us!</h2>
-              <p>Escape the hustle and bustle of life and embark on a journey of eco-friendly discovery at our guest house.</p>
-              <div className="contact-details">
+              <h2>Book your eco-getaway with us!</h2>
+              <p>Escape the hustle and bustle of life and embark on a journey of eco-friendly discovery at our guesthouse.</p>
+              <div className="contact-details"> 
                 <p>Phone: +233 25 607 8747</p>
                 <p>Address: Busua, Western Region, Ghana</p>
                 <p>Email: info@bokoboko.org</p>
