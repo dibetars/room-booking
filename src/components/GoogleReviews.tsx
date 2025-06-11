@@ -37,7 +37,7 @@ const GoogleReviews = () => {
   const review = reviews[current];
 
   return (
-    <div style={{ background: 'white', borderRadius: 8, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', maxWidth: 500, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
+    <div style={{ background: 'white', borderRadius: 8, padding: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', maxWidth: 1000, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
       <h3 style={{ marginTop: 0 }}>Google Reviews</h3>
       <div style={{ minHeight: 120 }}>
         <strong>{review.author}</strong> <span style={{ color: '#fbc02d' }}>{'★'.repeat(review.rating)}</span> <span style={{ color: '#888' }}>{review.time}</span>
