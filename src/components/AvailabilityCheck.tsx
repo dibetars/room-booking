@@ -22,7 +22,7 @@ const AvailabilityCheck = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:3001/api/check-availability',
+        'https://n0wks0o0wskog00c0gwk4cc8.obrobibini.com/api/check-availability',
         {
           arrivalDate,
           departureDate,
@@ -30,6 +30,7 @@ const AvailabilityCheck = () => {
           customerId: 1107218
         }
       );
+
 
       setAvailabilityData(response.data);
       setIsModalOpen(true);
