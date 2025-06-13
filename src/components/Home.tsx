@@ -14,6 +14,13 @@ const Home = ({ isBookingModalOpen, setIsBookingModalOpen, handleBookNow }: Home
   const [isNavbarScrolled, setIsNavbarScrolled] = useState(false);
   const [exchangeRate, setExchangeRate] = useState<number>(14.3); // Default fallback
 
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
@@ -40,7 +47,7 @@ const Home = ({ isBookingModalOpen, setIsBookingModalOpen, handleBookNow }: Home
       {/* Navbar */}
       <nav className={`navbar ${isNavbarScrolled ? 'scrolled' : ''}`}>
         <div className="nav-content">
-          <div className="logo">
+          <div className="logo" onClick={scrollToTop} style={{ cursor: 'pointer' }}>
             <img src="/images/Boko-Logo.png" alt="BokoBoko Logo" />
           </div>
           <div className="nav-links">
