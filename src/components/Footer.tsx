@@ -7,12 +7,19 @@ interface FooterProps {
 }
 
 const Footer = ({ onBookNow }: FooterProps) => {
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
   return (
     <footer className="footer">
       <div className="footer-content">
         <div className="footer-section">
           <div className="footer-column">
-            <div className="footer-logo">
+            <div className="footer-logo" onClick={scrollToTop} style={{ cursor: 'pointer' }}>
               <img src="/images/Boko-Logo.png" alt="BokoBoko Logo" />
             </div>
             <p className="footer-description">
