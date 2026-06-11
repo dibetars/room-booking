@@ -78,7 +78,17 @@ export async function checkAvailability(
 
   const res = await beds24Fetch(`/inventory/rooms/availability?${params}`);
   if (!res.ok) throw new Error(`Beds24 availability error: ${res.status}`);
-  return res.json();
+
+  const json = await res.json();
+  // Beds24 V2 wraps results in { success, data: [...] }
+  const rows: { roomId: number; availability: Record<string, boolean> }[] =
+    Array.isArray(json) ? json : (json?.data ?? []);
+
+  return rows.map((row) => ({
+    roomId: row.roomId,
+    // Room is available if every requested date is true
+    available: Object.values(row.availability ?? {}).every(Boolean),
+  }));
 }
 
 export async function getRoomOffers(
@@ -90,8 +100,8 @@ export async function getRoomOffers(
 ): Promise<{ price: number; available: boolean; currency: string } | null> {
   const params = new URLSearchParams({
     roomId: String(roomId),
-    startDate: checkIn,
-    endDate: checkOut,
+    arrival: checkIn,
+    departure: checkOut,
     numAdult: String(adults),
     numChild: String(children),
   });
@@ -100,9 +110,20 @@ export async function getRoomOffers(
   if (!res.ok) return null;
 
   const json = await res.json();
-  const offer = Array.isArray(json) ? json[0] : json;
-  if (!offer?.price || !offer?.available) return null;
-  return { price: offer.price, available: offer.available, currency: offer.currency ?? 'GHS' };
+  const rows = Array.isArray(json) ? json : (json?.data ?? [json]);
+  const offer = rows[0];
+  if (!offer) return null;
+
+  // Beds24 prices are in property currency (USD). Convert to GHS for Paystack.
+  const GHS_PER_USD = Number(process.env.GHS_PER_USD ?? '15.5');
+  const priceUSD: number = offer.price ?? offer.totalPrice ?? 0;
+  if (!priceUSD) return null;
+
+  return {
+    price: Math.round(priceUSD * GHS_PER_USD * 100) / 100,
+    available: offer.available !== false,
+    currency: 'GHS',
+  };
 }
 
 export async function createBooking(booking: Beds24Booking): Promise<{ id: number }> {

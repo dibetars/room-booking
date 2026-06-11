@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { checkAvailability, getRoomOffers } from '@/lib/beds24';
+import { checkAvailability } from '@/lib/beds24';
 import { ROOMS } from '@/lib/rooms';
 
 const schema = z.object({
@@ -43,28 +43,26 @@ export async function GET(req: NextRequest) {
     const roomIds = ROOMS.map((r) => r.id);
     const availability = await checkAvailability(roomIds, checkIn, checkOut);
 
-    const rooms = await Promise.all(
-      ROOMS.map(async (room) => {
-        const avail = availability.find((a) => a.roomId === room.id);
-        if (!avail?.available) {
-          return { ...room, available: false, totalPriceGHS: 0, perNight: 0 };
-        }
-        const offer = await getRoomOffers(room.id, checkIn, checkOut, adults, children);
-        if (!offer?.available) {
-          return { ...room, available: false, totalPriceGHS: 0, perNight: 0 };
-        }
-        return {
-          roomId: room.id,
-          name: room.name,
-          description: room.description,
-          maxOccupancy: room.maxOccupancy,
-          photos: room.photos,
-          available: true,
-          totalPriceGHS: offer.price,
-          perNight: Math.round(offer.price / nights),
-        };
-      })
-    );
+    const GHS_PER_USD = Number(process.env.GHS_PER_USD ?? '15.5');
+
+    const rooms = ROOMS.map((room) => {
+      const avail = availability.find((a) => a.roomId === room.id);
+      if (!avail?.available) {
+        return { roomId: room.id, name: room.name, description: room.description, maxOccupancy: room.maxOccupancy, photos: room.photos, available: false, totalPriceGHS: 0, perNight: 0 };
+      }
+      const perNightGHS = Math.round(room.rackRateUSD * GHS_PER_USD);
+      const totalPriceGHS = perNightGHS * nights;
+      return {
+        roomId: room.id,
+        name: room.name,
+        description: room.description,
+        maxOccupancy: room.maxOccupancy,
+        photos: room.photos,
+        available: true,
+        totalPriceGHS,
+        perNight: perNightGHS,
+      };
+    });
 
     return NextResponse.json({ rooms, checkIn, checkOut, nights, adults, children });
   } catch (err: unknown) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getRoomOffers, createBooking } from '@/lib/beds24';
+import { createBooking } from '@/lib/beds24';
 import { initializeTransaction } from '@/lib/paystack';
 import { createIntent, getIntentByRef } from '@/lib/supabase';
 import { generateReference } from '@/lib/booking-ref';
@@ -56,18 +56,18 @@ export async function POST(req: NextRequest) {
   setTimeout(() => recentRequests.delete(dedupeKey), 5 * 60 * 1000);
 
   try {
-    // 1. Get authoritative live price from Beds24
-    const offer = await getRoomOffers(roomId, checkIn, checkOut, adults, children);
-    if (!offer?.available) {
-      return NextResponse.json({ error: 'These dates are no longer available' }, { status: 409 });
-    }
+    // Authoritative price from room config (Beds24 rackRate × nights × exchange rate)
+    const nights = Math.round(
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000
+    );
+    const GHS_PER_USD = Number(process.env.GHS_PER_USD ?? '15.5');
+    const priceGHS = room.rackRateUSD * nights * GHS_PER_USD;
+    const amountPesewas = Math.round(priceGHS * 100);
 
-    // Amount is always server-computed — never trust client
-    const amountPesewas = Math.round(offer.price * 100);
     const reference = generateReference();
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
-    // 2. Create hold in Beds24 (status=request blocks OTA availability)
+    // 1. Create hold in Beds24 (status=request blocks OTA availability)
     const [firstName, ...rest] = guest.name.split(' ');
     const beds24Result = await createBooking({
       roomId,
@@ -80,12 +80,12 @@ export async function POST(req: NextRequest) {
       email: guest.email,
       phone: guest.phone,
       status: 'request',
-      price: offer.price,
+      price: room.rackRateUSD * nights,
       referer: 'BokoBoko Direct',
       info: `Ref: ${reference}`,
     });
 
-    // 3. Persist the intent in Supabase
+    // 2. Persist the intent in Supabase
     await createIntent({
       reference,
       status: 'HELD',
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
       paystack_raw: null,
     });
 
-    // 4. Initialize Paystack transaction
+    // 3. Initialize Paystack transaction
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://book.bokoboko.org';
     const paystack = await initializeTransaction({
       email: guest.email,
@@ -128,8 +128,8 @@ export async function POST(req: NextRequest) {
       expiresAt,
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[POST /api/bookings]', { ip, message });
+    const message = err instanceof Error ? err.message : JSON.stringify(err);
+    console.error('[POST /api/bookings]', { ip, message, err });
 
     if (message === 'BEDS24_RATE_LIMITED') {
       return NextResponse.json({ error: 'Service busy, please try again shortly' }, { status: 429 });
