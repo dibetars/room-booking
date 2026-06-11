@@ -15,8 +15,10 @@ dist-ssr
 # Vite cache
 .vite/
 
-# Large media files (serve from CDN/storage)
+# Media and server files (not tracked)
+public/images/
 public/videos/
+server/
 
 # Environment files
 .env
