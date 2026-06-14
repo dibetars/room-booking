@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createBooking } from '@/lib/beds24';
-import { initializeTransaction } from '@/lib/paystack';
 import { createIntent, getIntentByRef } from '@/lib/supabase';
 import { generateReference } from '@/lib/booking-ref';
 import { ROOMS } from '@/lib/rooms';
@@ -71,12 +70,12 @@ export async function POST(req: NextRequest) {
     const [firstName, ...rest] = guest.name.split(' ');
     const beds24Result = await createBooking({
       roomId,
-      firstNight: checkIn,
-      lastNight: new Date(new Date(checkOut).getTime() - 86400000).toISOString().slice(0, 10),
+      arrival: checkIn,
+      departure: checkOut,
       numAdult: adults,
       numChild: children,
       guestFirstName: firstName,
-      guestName: rest.join(' ') || firstName,
+      guestLastName: rest.join(' ') || firstName,
       email: guest.email,
       phone: guest.phone,
       status: 'request',
@@ -106,27 +105,7 @@ export async function POST(req: NextRequest) {
       paystack_raw: null,
     });
 
-    // 3. Initialize Paystack transaction
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://book.bokoboko.org';
-    const paystack = await initializeTransaction({
-      email: guest.email,
-      amountPesewas,
-      reference,
-      callbackUrl: `${baseUrl}/confirm/${reference}`,
-      metadata: {
-        beds24_booking_id: beds24Result.id,
-        room_id: roomId,
-        check_in: checkIn,
-        check_out: checkOut,
-        guest_name: guest.name,
-      },
-    });
-
-    return NextResponse.json({
-      reference,
-      authorizationUrl: paystack.authorizationUrl,
-      expiresAt,
-    });
+    return NextResponse.json({ reference, amountPesewas, expiresAt });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : JSON.stringify(err);
     console.error('[POST /api/bookings]', { ip, message, err });

@@ -75,12 +75,12 @@ export interface Beds24Booking {
   id?: number;
   propId?: number;
   roomId: number;
-  firstNight: string;
-  lastNight: string;
+  arrival: string;
+  departure: string;
   numAdult: number;
   numChild: number;
   guestFirstName: string;
-  guestName: string;
+  guestLastName: string;
   email: string;
   phone?: string;
   status: 'confirmed' | 'request' | 'new' | 'cancelled';

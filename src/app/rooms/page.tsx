@@ -2,7 +2,10 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import type { RoomAvailability } from '@/types';
+
+const GHS_PER_USD = Number(process.env.NEXT_PUBLIC_GHS_PER_USD ?? '15.5');
 
 function RoomsContent() {
   const router = useRouter();
@@ -69,27 +72,41 @@ function RoomsContent() {
         )}
 
         <div className="space-y-4">
-          {rooms.filter((r) => r.available).map((room) => (
-            <div key={room.roomId} className="bg-white rounded-2xl shadow p-5 flex flex-col gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-800">{room.name}</h2>
-                <p className="text-sm text-gray-500 mt-1">{room.description}</p>
-                <p className="text-xs text-gray-400 mt-1">Up to {room.maxOccupancy} guests</p>
-              </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-2xl font-bold text-[#2d5a27]">GHS {room.totalPriceGHS.toLocaleString()}</p>
-                  <p className="text-xs text-gray-500">GHS {room.perNight.toLocaleString()} / night</p>
+          {rooms.filter((r) => r.available).map((room) => {
+            const perNightUSD = Math.round(room.perNight / GHS_PER_USD);
+            const totalUSD = perNightUSD * nights;
+            const photo = room.photos?.[0];
+            return (
+              <div key={room.roomId} className="bg-white rounded-2xl shadow overflow-hidden flex flex-col sm:flex-row gap-0">
+                {photo && (
+                  <div className="relative w-full sm:w-48 h-44 sm:h-auto shrink-0">
+                    <Image src={photo} alt={room.name} fill className="object-cover" />
+                  </div>
+                )}
+                <div className="p-5 flex flex-col flex-1 gap-2">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800">{room.name}</h2>
+                    <p className="text-sm text-gray-500 mt-0.5">{room.description}</p>
+                    <p className="text-xs text-gray-400 mt-1">Up to {room.maxOccupancy} guests</p>
+                  </div>
+                  <div className="flex items-end justify-between mt-auto pt-2">
+                    <div>
+                      <p className="text-2xl font-bold text-[#2d5a27]">GHS {room.totalPriceGHS.toLocaleString()}</p>
+                      <p className="text-xs text-gray-400">
+                        GHS {room.perNight.toLocaleString()} / night · <span className="text-gray-500">${perNightUSD} / night · ${totalUSD} total</span>
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => selectRoom(room)}
+                      className="bg-[#2d5a27] text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-[#245020] transition-colors shrink-0"
+                    >
+                      Select
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={() => selectRoom(room)}
-                  className="bg-[#2d5a27] text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-[#245020] transition-colors"
-                >
-                  Select
-                </button>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </main>

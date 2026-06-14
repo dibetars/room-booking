@@ -138,8 +138,11 @@ export async function createBooking(booking: Beds24Booking): Promise<{ id: numbe
   }
 
   const json = await res.json();
-  const created = Array.isArray(json) ? json[0] : json;
-  return { id: created.id };
+  // Beds24 V2 response: [{ success: true, new: { id: 123 }, info: [...] }]
+  const item = Array.isArray(json) ? json[0] : json;
+  const id: number = item?.new?.id ?? item?.id;
+  if (!id) throw new Error(`Beds24 create booking: no ID in response: ${JSON.stringify(json)}`);
+  return { id };
 }
 
 export async function updateBookingStatus(
