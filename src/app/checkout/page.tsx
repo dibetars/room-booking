@@ -75,7 +75,7 @@ function CheckoutContent() {
           setError('Payment cancelled. Your room hold is still active.');
           setSubmitting(false);
         },
-        callback(response) {
+        callback(response: { reference: string }) {
           router.push(`/confirm/${response.reference}`);
         },
       });
