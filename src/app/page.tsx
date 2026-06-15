@@ -5,18 +5,6 @@ import Image from 'next/image';
 import Script from 'next/script';
 import { ROOMS } from '@/lib/rooms';
 
-declare global {
-  interface Window {
-    PaystackPop: {
-      setup(opts: {
-        key: string; email: string; amount: number; currency: string; ref: string;
-        channels?: string[];
-        onClose(): void;
-        callback(resp: { reference: string }): void;
-      }): { openIframe(): void };
-    };
-  }
-}
 
 const GHS_PER_USD = Number(process.env.NEXT_PUBLIC_GHS_PER_USD ?? '15.5');
 const toGHS = (usd: number) => Math.round(usd * GHS_PER_USD);
@@ -117,7 +105,8 @@ export default function HomePage() {
       const { reference, amountPesewas } = data;
       const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ?? '';
 
-      const handler = window.PaystackPop.setup({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const handler = (window as any).PaystackPop.setup({
         key: paystackKey,
         email,
         amount: amountPesewas,
@@ -128,7 +117,7 @@ export default function HomePage() {
           setBookingError('Payment cancelled. You can try again.');
           setSubmitting(false);
         },
-        callback(response) {
+        callback(response: { reference: string }) {
           window.location.href = `/confirm/${response.reference}`;
         },
       });
