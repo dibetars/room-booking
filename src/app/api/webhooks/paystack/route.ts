@@ -3,8 +3,6 @@ import { verifyWebhookSignature, verifyTransaction } from '@/lib/paystack';
 import { getIntentByRef, updateIntentStatus } from '@/lib/supabase';
 import { updateBookingStatus } from '@/lib/beds24';
 
-export const config = { api: { bodyParser: false } };
-
 export async function POST(req: NextRequest) {
   const signature = req.headers.get('x-paystack-signature') ?? '';
   const rawBody = Buffer.from(await req.arrayBuffer());
