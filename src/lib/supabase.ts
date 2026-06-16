@@ -47,6 +47,26 @@ export async function updateIntentStatus(
   if (error) throw error;
 }
 
+export async function getIntentsByBeds24Ids(ids: number[]): Promise<BookingIntent[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await getClient()
+    .from('booking_intents')
+    .select()
+    .in('beds24_booking_id', ids);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getIntentByBeds24Id(beds24Id: number): Promise<BookingIntent | null> {
+  const { data, error } = await getClient()
+    .from('booking_intents')
+    .select()
+    .eq('beds24_booking_id', beds24Id)
+    .single();
+  if (error) return null;
+  return data;
+}
+
 export async function getExpiredHeldIntents(): Promise<BookingIntent[]> {
   const { data, error } = await getClient()
     .from('booking_intents')

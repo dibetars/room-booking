@@ -160,6 +160,25 @@ export async function updateBookingStatus(
   }
 }
 
+export async function getBookings(params: {
+  startArrival?: string;
+  endArrival?: string;
+  startDeparture?: string;
+  endDeparture?: string;
+  status?: string;
+}): Promise<Beds24Booking[]> {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => { if (v) query.set(k, v); });
+
+  const res = await beds24Fetch(`/bookings?${query}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Beds24 getBookings failed: ${res.status} ${body}`);
+  }
+  const json = await res.json();
+  return Array.isArray(json) ? json : (json?.data ?? []);
+}
+
 export async function refreshTokenForCron(): Promise<void> {
   cachedToken = null;
   tokenExpiresAt = 0;
