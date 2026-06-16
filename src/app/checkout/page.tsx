@@ -115,12 +115,8 @@ function CheckoutContent() {
             </p>
             <div className="border-t pt-2 space-y-1">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">GHS {perNight.toLocaleString()} × {nights} night{nights !== 1 ? 's' : ''}</span>
-                <span className="font-bold text-[#2d5a27]">GHS {totalPriceGHS.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-xs text-gray-400">
-                <span>${perNightUSD} / night</span>
-                <span>≈ ${totalUSD} USD</span>
+                <span className="text-sm text-gray-500">${perNightUSD} / night × {nights} night{nights !== 1 ? 's' : ''}</span>
+                <span className="font-bold text-[#2d5a27]">${totalUSD}</span>
               </div>
             </div>
           </div>
@@ -162,11 +158,11 @@ function CheckoutContent() {
 
             <button type="submit" disabled={submitting}
               className="w-full bg-[#2d5a27] text-white font-semibold py-3 rounded-xl hover:bg-[#245020] transition-colors disabled:opacity-60">
-              {submitting ? 'Opening payment…' : `Pay GHS ${totalPriceGHS.toLocaleString()} · $${totalUSD}`}
+              {submitting ? 'Opening payment…' : `Pay $${totalUSD}`}
             </button>
 
             <p className="text-xs text-gray-400 text-center">
-              Secure payment powered by Paystack. Prices in Ghana Cedis (GHS).
+              Secure payment powered by Paystack. Prices in USD.
             </p>
           </form>
         </div>

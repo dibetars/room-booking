@@ -248,11 +248,11 @@ export default function HomePage() {
                           <p className="text-xs text-gray-400 mb-2">Up to {room.maxOccupancy} guests</p>
                           <div className="mb-3">
                             <div className="flex items-baseline gap-1.5">
-                              <span className="text-lg font-bold text-[#BE6A45]">GHS {room.perNight.toLocaleString()}</span>
-                              <span className="text-gray-400 text-xs">/ night · ${perNightUSD}</span>
+                              <span className="text-lg font-bold text-[#BE6A45]">${perNightUSD}</span>
+                              <span className="text-gray-400 text-xs">/ night</span>
                             </div>
                             <p className="text-xs font-semibold text-gray-700 mt-0.5">
-                              Total: GHS {room.totalPriceGHS.toLocaleString()} <span className="text-gray-400 font-normal">≈ ${totalUSD}</span>
+                              Total: ${totalUSD}
                             </p>
                           </div>
                           <button onClick={() => { setSelectedRoom(room); setBookingError(''); }}
@@ -286,12 +286,9 @@ export default function HomePage() {
                 <p className="font-semibold text-gray-800">{selectedRoom.name}</p>
                 <p className="text-sm text-gray-500">{fmt(checkIn)} → {fmt(checkOut)} · {nights} night{nights !== 1 ? 's' : ''}</p>
                 <div className="flex justify-between items-baseline mt-2">
-                  <span className="text-sm text-gray-500">GHS {selectedRoom.perNight.toLocaleString()} × {nights}</span>
-                  <span className="font-bold text-[#BE6A45]">GHS {selectedRoom.totalPriceGHS.toLocaleString()}</span>
+                  <span className="text-sm text-gray-500">${Math.round(selectedRoom.perNight / GHS_PER_USD)} × {nights} night{nights !== 1 ? 's' : ''}</span>
+                  <span className="font-bold text-[#BE6A45]">${Math.round(selectedRoom.totalPriceGHS / GHS_PER_USD)}</span>
                 </div>
-                <p className="text-xs text-gray-400 text-right">
-                  ≈ ${Math.round(selectedRoom.totalPriceGHS / GHS_PER_USD)} USD
-                </p>
               </div>
 
               {/* Guest form */}
@@ -326,7 +323,7 @@ export default function HomePage() {
 
                 <button type="submit" disabled={submitting}
                   className="w-full bg-[#BE6A45] hover:bg-[#a85a38] text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-60">
-                  {submitting ? 'Opening payment…' : `Pay GHS ${selectedRoom.totalPriceGHS.toLocaleString()}`}
+                  {submitting ? 'Opening payment…' : `Pay $${Math.round(selectedRoom.totalPriceGHS / GHS_PER_USD)}`}
                 </button>
                 <p className="text-xs text-gray-400 text-center">Secure payment powered by Paystack.</p>
               </form>
@@ -377,8 +374,6 @@ export default function HomePage() {
                   <div className="flex items-baseline gap-2 mb-4">
                     <span className="text-2xl font-bold text-[#BE6A45]">${usd}</span>
                     <span className="text-gray-400 text-sm">/ night</span>
-                    <span className="text-gray-400 text-sm">·</span>
-                    <span className="text-gray-500 text-sm font-medium">GHS {toGHS(usd).toLocaleString()}</span>
                   </div>
                   <a href="#search" className="block text-center bg-black text-white font-semibold px-5 py-2.5 rounded-full hover:bg-[#BE6A45] transition-colors">
                     Book Now

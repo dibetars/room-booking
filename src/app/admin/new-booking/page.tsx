@@ -33,7 +33,7 @@ export default function NewBookingPage() {
     (new Date(form.checkOut).getTime() - new Date(form.checkIn).getTime()) / 86400000
   ));
   const GHS_PER_USD = Number(process.env.NEXT_PUBLIC_GHS_PER_USD ?? '15.5');
-  const autoPrice = (room.rackRateUSD * nights * GHS_PER_USD).toFixed(2);
+  const autoPrice = (room.rackRateUSD * nights).toFixed(2);
 
   function set(field: string, value: string | number) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -59,7 +59,7 @@ export default function NewBookingPage() {
         email: form.email,
         phone: form.phone || undefined,
         notes: form.notes || undefined,
-        priceGHS: form.priceOverride ? Number(form.priceOverride) : undefined,
+        priceGHS: form.priceOverride ? Number(form.priceOverride) * GHS_PER_USD : undefined,
       }),
     });
 
@@ -161,10 +161,10 @@ export default function NewBookingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Price override (GHS) <span className="text-gray-400 font-normal">— leave blank to use rack rate</span>
+                Price override (USD) <span className="text-gray-400 font-normal">— leave blank to use rack rate</span>
               </label>
               <input type="number" step="0.01" min="0" value={form.priceOverride}
-                placeholder={`Auto: GHS ${autoPrice} (${nights} night${nights !== 1 ? 's' : ''})`}
+                placeholder={`Auto: $${autoPrice} (${nights} night${nights !== 1 ? 's' : ''})`}
                 onChange={(e) => set('priceOverride', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]" />
             </div>
