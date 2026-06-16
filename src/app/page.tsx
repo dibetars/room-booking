@@ -23,6 +23,7 @@ interface RoomResult {
   available: boolean;
   totalPriceGHS: number;
   perNight: number;
+  rackRateUSD: number;
 }
 
 // Derive category starting prices — sorted distinct rack rates map to Standard / Deluxe / Family
@@ -235,8 +236,8 @@ export default function HomePage() {
               {results !== null && results.filter(r => r.available).length > 0 && (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {results.filter(r => r.available).map(room => {
-                    const perNightUSD = Math.round(room.perNight / GHS_PER_USD);
-                    const totalUSD = perNightUSD * nights;
+                    const perNightUSD = room.rackRateUSD;
+                    const totalUSD = room.rackRateUSD * nights;
                     return (
                       <div key={room.roomId} className="bg-[#f9f9f9] rounded-2xl overflow-hidden flex flex-col">
                         <div className="aspect-[4/3] relative">
@@ -286,8 +287,8 @@ export default function HomePage() {
                 <p className="font-semibold text-gray-800">{selectedRoom.name}</p>
                 <p className="text-sm text-gray-500">{fmt(checkIn)} → {fmt(checkOut)} · {nights} night{nights !== 1 ? 's' : ''}</p>
                 <div className="flex justify-between items-baseline mt-2">
-                  <span className="text-sm text-gray-500">${Math.round(selectedRoom.perNight / GHS_PER_USD)} × {nights} night{nights !== 1 ? 's' : ''}</span>
-                  <span className="font-bold text-[#BE6A45]">${Math.round(selectedRoom.totalPriceGHS / GHS_PER_USD)}</span>
+                  <span className="text-sm text-gray-500">${selectedRoom.rackRateUSD} × {nights} night{nights !== 1 ? 's' : ''}</span>
+                  <span className="font-bold text-[#BE6A45]">${selectedRoom.rackRateUSD * nights}</span>
                 </div>
               </div>
 
@@ -323,7 +324,7 @@ export default function HomePage() {
 
                 <button type="submit" disabled={submitting}
                   className="w-full bg-[#BE6A45] hover:bg-[#a85a38] text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-60">
-                  {submitting ? 'Opening payment…' : `Pay $${Math.round(selectedRoom.totalPriceGHS / GHS_PER_USD)}`}
+                  {submitting ? 'Opening payment…' : `Pay $${selectedRoom.rackRateUSD * nights}`}
                 </button>
                 <p className="text-xs text-gray-400 text-center">Secure payment powered by Paystack.</p>
               </form>

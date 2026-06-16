@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
     const rooms = ROOMS.map((room) => {
       const avail = availability.find((a) => a.roomId === room.id);
       if (!avail?.available) {
-        return { roomId: room.id, name: room.name, description: room.description, maxOccupancy: room.maxOccupancy, photos: room.photos, available: false, totalPriceGHS: 0, perNight: 0 };
+        return { roomId: room.id, name: room.name, description: room.description, maxOccupancy: room.maxOccupancy, photos: room.photos, available: false, totalPriceGHS: 0, perNight: 0, rackRateUSD: room.rackRateUSD };
       }
       const perNightGHS = Math.round(room.rackRateUSD * GHS_PER_USD);
       const totalPriceGHS = perNightGHS * nights;
@@ -61,6 +61,7 @@ export async function GET(req: NextRequest) {
         available: true,
         totalPriceGHS,
         perNight: perNightGHS,
+        rackRateUSD: room.rackRateUSD,
       };
     });
 
