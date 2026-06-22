@@ -78,7 +78,7 @@ export default function NewBookingPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
+    <div className="px-6 py-8 space-y-6">
 
       {/* Page header */}
       <div>
