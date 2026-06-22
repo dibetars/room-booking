@@ -181,9 +181,9 @@ export default function HomePage() {
             <button onClick={() => setShowSearchModal(true)} className="bg-black text-white px-5 py-2.5 rounded-full font-semibold hover:bg-[#BE6A45] transition-colors">
               Book Now
             </button>
-            <a href="/admin" className={`text-xs font-medium transition-colors hover:text-[#BE6A45] ${scrolled ? 'text-gray-400' : 'text-white/50'}`}>
+            <button onClick={() => window.location.href = '/admin'} className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${scrolled ? 'border-gray-300 text-gray-500 hover:border-[#BE6A45] hover:text-[#BE6A45]' : 'border-white/40 text-white/70 hover:border-white hover:text-white'}`}>
               Admin
-            </a>
+            </button>
           </div>
         </div>
       </nav>
