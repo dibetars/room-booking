@@ -178,12 +178,12 @@ export default function HomePage() {
                 </a>
               );
             })}
-            <a href="/admin" className={`text-xs font-medium transition-colors hover:text-[#BE6A45] ${scrolled ? 'text-gray-400' : 'text-white/50'}`}>
-              Admin
-            </a>
             <button onClick={() => setShowSearchModal(true)} className="bg-black text-white px-5 py-2.5 rounded-full font-semibold hover:bg-[#BE6A45] transition-colors">
               Book Now
             </button>
+            <a href="/admin" className={`text-xs font-medium transition-colors hover:text-[#BE6A45] ${scrolled ? 'text-gray-400' : 'text-white/50'}`}>
+              Admin
+            </a>
           </div>
         </div>
       </nav>
