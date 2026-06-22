@@ -40,6 +40,7 @@ const ROOM_CATEGORIES = [
 
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState('');
   const [checkIn, setCheckIn] = useState(todayStr());
   const [checkOut, setCheckOut] = useState(tomorrowStr());
   const [adults, setAdults] = useState('2');
@@ -62,6 +63,22 @@ export default function HomePage() {
     const fn = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', fn);
     return () => window.removeEventListener('scroll', fn);
+  }, []);
+
+  useEffect(() => {
+    const sections = ['about', 'rooms', 'amenities', 'contact'];
+    const observers: IntersectionObserver[] = [];
+    sections.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveSection(id); },
+        { rootMargin: '-40% 0px -55% 0px', threshold: 0 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach((o) => o.disconnect());
   }, []);
 
   async function handleSearch(e: React.FormEvent) {
@@ -147,10 +164,20 @@ export default function HomePage() {
               className={`h-14 w-auto object-contain transition-all ${scrolled ? 'brightness-0' : ''}`} />
           </a>
           <div className="hidden md:flex items-center gap-8">
-            {['About', 'Rooms', 'Amenities', 'Contact'].map((s) => (
-              <a key={s} href={`#${s.toLowerCase()}`}
-                className={`font-medium transition-colors hover:text-[#BE6A45] ${scrolled ? 'text-[#333]' : 'text-white'}`}>{s}</a>
-            ))}
+            {['About', 'Rooms', 'Amenities', 'Contact'].map((s) => {
+              const isActive = activeSection === s.toLowerCase();
+              return (
+                <a key={s} href={`#${s.toLowerCase()}`}
+                  className={`font-medium transition-colors hover:text-[#BE6A45] relative
+                    ${isActive ? 'text-[#BE6A45]' : scrolled ? 'text-[#333]' : 'text-white'}
+                  `}>
+                  {s}
+                  {isActive && (
+                    <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#BE6A45] rounded-full" />
+                  )}
+                </a>
+              );
+            })}
             <button onClick={() => setShowSearchModal(true)} className="bg-black text-white px-5 py-2.5 rounded-full font-semibold hover:bg-[#BE6A45] transition-colors">
               Book Now
             </button>
