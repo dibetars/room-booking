@@ -45,6 +45,7 @@ export default function HomePage() {
   const [adults, setAdults] = useState('2');
   const [children, setChildren] = useState('0');
 
+  const [showSearchModal, setShowSearchModal] = useState(false);
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<RoomResult[] | null>(null);
   const [searchError, setSearchError] = useState('');
@@ -68,6 +69,7 @@ export default function HomePage() {
     setSearching(true);
     setSearchError('');
     setResults(null);
+    setShowSearchModal(false);
 
     try {
       const qs = new URLSearchParams({ checkIn, checkOut, adults, children });
@@ -149,9 +151,9 @@ export default function HomePage() {
               <a key={s} href={`#${s.toLowerCase()}`}
                 className={`font-medium transition-colors hover:text-[#BE6A45] ${scrolled ? 'text-[#333]' : 'text-white'}`}>{s}</a>
             ))}
-            <a href="#search" className="bg-black text-white px-5 py-2.5 rounded-full font-semibold hover:bg-[#BE6A45] transition-colors">
+            <button onClick={() => setShowSearchModal(true)} className="bg-black text-white px-5 py-2.5 rounded-full font-semibold hover:bg-[#BE6A45] transition-colors">
               Book Now
-            </a>
+            </button>
           </div>
         </div>
       </nav>
@@ -210,6 +212,55 @@ export default function HomePage() {
           </form>
         </div>
       </section>
+
+      {/* Search / Booking Modal */}
+      {showSearchModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-gray-800">Check Availability</h2>
+              <button onClick={() => setShowSearchModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+            <form onSubmit={handleSearch} className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Check-in</label>
+                  <input type="date" value={checkIn} min={todayStr()} required
+                    onChange={e => setCheckIn(e.target.value)}
+                    className="w-full text-gray-800 font-medium text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#BE6A45]" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Check-out</label>
+                  <input type="date" value={checkOut} min={checkIn} required
+                    onChange={e => setCheckOut(e.target.value)}
+                    className="w-full text-gray-800 font-medium text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#BE6A45]" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Adults</label>
+                  <select value={adults} onChange={e => setAdults(e.target.value)}
+                    className="w-full text-gray-800 font-medium text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#BE6A45]">
+                    {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Children</label>
+                  <select value={children} onChange={e => setChildren(e.target.value)}
+                    className="w-full text-gray-800 font-medium text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#BE6A45]">
+                    {[0,1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+              </div>
+              <button type="submit" disabled={searching}
+                className="w-full bg-[#BE6A45] hover:bg-[#a85a38] text-white font-bold px-8 py-3 rounded-xl transition-colors disabled:opacity-70">
+                {searching ? 'Searching…' : 'Search Rooms'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Availability Results Modal */}
       {(results !== null || searchError) && !selectedRoom && (
@@ -349,9 +400,9 @@ export default function HomePage() {
               are nurtured in our garden. Our guesthouse is crafted using sustainable construction
               techniques, and all profits are redirected into OPC — the NGO that brought BokoBoko to life.
             </p>
-            <a href="#search" className="inline-block bg-black text-white font-semibold px-7 py-3 rounded-full hover:bg-[#BE6A45] transition-colors">
+            <button onClick={() => setShowSearchModal(true)} className="bg-black text-white font-semibold px-7 py-3 rounded-full hover:bg-[#BE6A45] transition-colors">
               Book Now
-            </a>
+            </button>
           </div>
         </div>
       </section>
@@ -376,9 +427,9 @@ export default function HomePage() {
                     <span className="text-2xl font-bold text-[#BE6A45]">${usd}</span>
                     <span className="text-gray-400 text-sm">/ night</span>
                   </div>
-                  <a href="#search" className="block text-center bg-black text-white font-semibold px-5 py-2.5 rounded-full hover:bg-[#BE6A45] transition-colors">
+                  <button onClick={() => setShowSearchModal(true)} className="w-full bg-black text-white font-semibold px-5 py-2.5 rounded-full hover:bg-[#BE6A45] transition-colors">
                     Book Now
-                  </a>
+                  </button>
                 </div>
               </div>
             ))}
@@ -462,10 +513,10 @@ export default function HomePage() {
                 <p>Phone: +233 59 864 1683</p>
                 <p>Address: Busua, Western Region, Ghana</p>
               </div>
-              <a href="#search"
-                className="inline-block bg-white text-[#BE6A45] font-bold px-7 py-3 rounded-lg hover:bg-gray-100 transition-colors w-fit">
+              <button onClick={() => setShowSearchModal(true)}
+                className="bg-white text-[#BE6A45] font-bold px-7 py-3 rounded-lg hover:bg-gray-100 transition-colors w-fit">
                 Book Now
-              </a>
+              </button>
             </div>
 
             {/* Right: people photo */}
@@ -501,12 +552,6 @@ export default function HomePage() {
                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
                   <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/>
                   <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                </svg>
-              </a>
-              <a href="https://www.tripadvisor.com" target="_blank" rel="noopener"
-                className="bg-[#BE6A45] hover:bg-[#a85a38] transition-colors p-3 rounded-lg">
-                <svg width="20" height="20" fill="white" viewBox="0 0 24 24">
-                  <path d="M3 3h4v4H3zm7 0h4v4h-4zm7 0h4v4h-4zM3 10h4v4H3zm7 0h4v4h-4zm7 0h4v4h-4zM3 17h4v4H3zm7 0h4v4h-4zm7 0h4v4h-4z"/>
                 </svg>
               </a>
             </div>
