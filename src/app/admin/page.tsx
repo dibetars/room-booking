@@ -78,6 +78,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [filter, setFilter] = useState<'upcoming' | 'today' | 'all'>('upcoming');
+  const [detailBooking, setDetailBooking] = useState<AdminBooking | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -104,6 +105,39 @@ export default function AdminDashboard() {
     else alert('Action failed. Please try again.');
   }
 
+  function exportCSV() {
+    const rows = visible.map((b) => ({
+      'Beds24 ID': b.id ?? '',
+      'First Name': b.guestFirstName,
+      'Last Name': b.guestLastName,
+      'Email': b.email,
+      'Phone': b.phone ?? '',
+      'Room': ROOM_NAMES[b.roomId] ?? `Room ${b.roomId}`,
+      'Check-in': b.arrival,
+      'Check-out': b.departure,
+      'Nights': nights(b.arrival, b.departure),
+      'Adults': b.numAdult,
+      'Children': b.numChild,
+      'Channel': channelBadge(b.referer).label,
+      'Beds24 Status': b.status,
+      'Payment Status': b.intent?.status ?? '',
+      'Reference': b.intent?.reference ?? '',
+      'Price (USD)': b.price ?? '',
+    }));
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(','),
+      ...rows.map((r) => headers.map((h) => `"${String(r[h as keyof typeof r] ?? '').replace(/"/g, '""')}"`).join(',')),
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bookings-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function logout() {
     await fetch('/api/admin/login', { method: 'DELETE' });
     router.push('/admin/login');
@@ -121,6 +155,7 @@ export default function AdminDashboard() {
     : bookings;
 
   return (
+    <>
     <div className="min-h-screen bg-[#f5f0e8]">
       {/* Header */}
       <header className="bg-[#2d5a27] text-white px-5 py-4 flex items-center justify-between">
@@ -166,9 +201,16 @@ export default function AdminDashboard() {
               {f === 'upcoming' ? 'Upcoming' : f === 'today' ? 'Today' : 'All (7d)'}
             </button>
           ))}
-          <button onClick={load} className="ml-auto text-sm text-gray-500 hover:text-gray-700 px-3">
-            ↻ Refresh
-          </button>
+          <div className="ml-auto flex gap-2">
+            <button onClick={load} className="text-sm text-gray-500 hover:text-gray-700 px-3">
+              ↻ Refresh
+            </button>
+            {visible.length > 0 && (
+              <button onClick={exportCSV} className="text-sm bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors">
+                ↓ Export CSV
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Table */}
@@ -203,7 +245,7 @@ export default function AdminDashboard() {
                     const isArriving = isToday(b.arrival);
                     const isDeparting = isToday(b.departure);
                     return (
-                      <tr key={b.id ?? i} className={`hover:bg-gray-50 ${isArriving ? 'bg-green-50/40' : isDeparting ? 'bg-orange-50/40' : ''}`}>
+                      <tr key={b.id ?? i} onClick={() => setDetailBooking(b)} className={`cursor-pointer hover:bg-gray-50 ${isArriving ? 'bg-green-50/40' : isDeparting ? 'bg-orange-50/40' : ''}`}>
                         <td className="px-4 py-3">
                           <p className="font-medium text-gray-800">{b.guestFirstName} {b.guestLastName}</p>
                           <p className="text-xs text-gray-400">{b.email}</p>
@@ -246,7 +288,7 @@ export default function AdminDashboard() {
                         <td className="px-4 py-3 text-xs text-gray-400 font-mono">
                           {b.intent?.reference ?? (b.id ? `#${b.id}` : '—')}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex gap-1.5 flex-wrap">
                             {b.status !== 'confirmed' && b.status !== 'cancelled' && (
                               <button
@@ -287,5 +329,124 @@ export default function AdminDashboard() {
         </div>
       </div>
     </div>
+
+    {/* Booking Detail Modal */}
+
+    {detailBooking && (() => {
+      const b = detailBooking;
+      const ch = channelBadge(b.referer);
+      const n = nights(b.arrival, b.departure);
+      return (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setDetailBooking(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div className="flex items-center gap-2">
+                <h2 className="font-bold text-gray-800 text-lg">{b.guestFirstName} {b.guestLastName}</h2>
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${ch.className}`}>{ch.label}</span>
+              </div>
+              <button onClick={() => setDetailBooking(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+
+            <div className="px-6 py-5 space-y-5">
+              {/* Stay */}
+              <div className="bg-[#f5f0e8] rounded-xl p-4 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Room</p>
+                  <p className="font-semibold text-gray-800">{ROOM_NAMES[b.roomId] ?? `Room ${b.roomId}`}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Beds24 ID</p>
+                  <p className="font-semibold text-gray-800">#{b.id ?? '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Check-in</p>
+                  <p className="font-semibold text-gray-800">{fmt(b.arrival)}{isToday(b.arrival) && <span className="ml-1 text-green-600 text-xs">Today</span>}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Check-out</p>
+                  <p className="font-semibold text-gray-800">{fmt(b.departure)}{isToday(b.departure) && <span className="ml-1 text-orange-500 text-xs">Today</span>}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Nights</p>
+                  <p className="font-semibold text-gray-800">{n}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Guests</p>
+                  <p className="font-semibold text-gray-800">{b.numAdult} adult{b.numAdult !== 1 ? 's' : ''}{b.numChild > 0 ? `, ${b.numChild} child${b.numChild !== 1 ? 'ren' : ''}` : ''}</p>
+                </div>
+              </div>
+
+              {/* Guest contact */}
+              <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Guest Contact</p>
+                <div className="space-y-1.5 text-sm">
+                  <p className="text-gray-700"><span className="text-gray-400 w-14 inline-block">Email</span>{b.email}</p>
+                  <p className="text-gray-700"><span className="text-gray-400 w-14 inline-block">Phone</span>{b.phone || '—'}</p>
+                </div>
+              </div>
+
+              {/* Status row */}
+              <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Status</p>
+                <div className="flex gap-2 flex-wrap">
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[b.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                    Beds24: {b.status}
+                  </span>
+                  {b.intent && (
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${PAYMENT_COLORS[b.intent.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                      Payment: {b.intent.status}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Price & reference */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Price</p>
+                  <p className="font-semibold text-gray-800">{b.price != null ? `$${b.price}` : '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Reference</p>
+                  <p className="font-mono text-xs text-gray-600">{b.intent?.reference ?? '—'}</p>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {b.info && (
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Notes</p>
+                  <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{b.info}</p>
+                </div>
+              )}
+
+              {/* Actions */}
+              {b.id && b.status !== 'cancelled' && (
+                <div className="flex gap-2 pt-1">
+                  {b.status !== 'confirmed' && (
+                    <button onClick={() => { doAction(b.id!, 'confirm'); setDetailBooking(null); }}
+                      className="flex-1 text-sm py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-medium">
+                      Confirm
+                    </button>
+                  )}
+                  {b.intent && ['HELD','PAID','RECONCILE_NEEDED'].includes(b.intent.status) && (
+                    <button onClick={() => { doAction(b.id!, 'mark_paid'); setDetailBooking(null); }}
+                      className="flex-1 text-sm py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium">
+                      Mark Paid
+                    </button>
+                  )}
+                  <button onClick={() => { if (confirm('Cancel this booking?')) { doAction(b.id!, 'cancel'); setDetailBooking(null); } }}
+                    className="flex-1 text-sm py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium">
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    })()}
+    </>
   );
 }
