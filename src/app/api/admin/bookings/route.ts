@@ -4,6 +4,9 @@ import { getBookings, createBooking } from '@/lib/beds24';
 import { getIntentsByBeds24Ids, createIntent } from '@/lib/supabase';
 import { generateReference } from '@/lib/booking-ref';
 import { ROOMS } from '@/lib/rooms';
+import { withCache, invalidate } from '@/lib/server-cache';
+
+const BOOKINGS_TTL = 2 * 60 * 1000; // 2 minutes
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
@@ -12,17 +15,18 @@ export async function GET(req: NextRequest) {
 
   const from = new Date(Date.now() - daysBack * 86400000).toISOString().slice(0, 10);
   const to = new Date(Date.now() + daysAhead * 86400000).toISOString().slice(0, 10);
+  const cacheKey = `bookings:${daysBack}:${daysAhead}`;
 
-  const beds24Bookings = await getBookings({ startArrival: from, endArrival: to });
-
-  const ids = beds24Bookings.map((b) => b.id).filter((id): id is number => !!id);
-  const intents = await getIntentsByBeds24Ids(ids);
-  const intentMap = new Map(intents.map((i) => [i.beds24_booking_id, i]));
-
-  const bookings = beds24Bookings.map((b) => ({
-    ...b,
-    intent: b.id ? (intentMap.get(b.id) ?? null) : null,
-  }));
+  const bookings = await withCache(cacheKey, BOOKINGS_TTL, async () => {
+    const beds24Bookings = await getBookings({ startArrival: from, endArrival: to });
+    const ids = beds24Bookings.map((b) => b.id).filter((id): id is number => !!id);
+    const intents = await getIntentsByBeds24Ids(ids);
+    const intentMap = new Map(intents.map((i) => [i.beds24_booking_id, i]));
+    return beds24Bookings.map((b) => ({
+      ...b,
+      intent: b.id ? (intentMap.get(b.id) ?? null) : null,
+    }));
+  });
 
   return NextResponse.json({ bookings });
 }
@@ -97,5 +101,7 @@ export async function POST(req: NextRequest) {
     paystack_raw: { source: 'admin_manual' },
   });
 
+  invalidate('bookings:');
+  invalidate('analytics:');
   return NextResponse.json({ reference, beds24Id: beds24Result.id });
 }

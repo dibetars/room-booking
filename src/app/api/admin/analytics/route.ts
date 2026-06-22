@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getBookings } from '@/lib/beds24';
 import { ROOMS } from '@/lib/rooms';
+import { withCache } from '@/lib/server-cache';
+
+const ANALYTICS_TTL = 5 * 60 * 1000; // 5 minutes
 
 function normalizeChannel(referer?: string): string {
   if (!referer) return 'Direct';
@@ -23,10 +26,10 @@ function monthLabel(yyyymm: string): string {
 }
 
 export async function GET() {
-  const from = new Date(Date.now() - 180 * 86400000).toISOString().slice(0, 10);
-  const to = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
-
   try {
+    return NextResponse.json(await withCache('analytics:main', ANALYTICS_TTL, async () => {
+    const from = new Date(Date.now() - 180 * 86400000).toISOString().slice(0, 10);
+    const to = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
     const all = await getBookings({ startArrival: from, endArrival: to });
     const confirmed = all.filter((b) => b.status === 'confirmed');
     const today = new Date().toISOString().slice(0, 10);
@@ -54,7 +57,7 @@ export async function GET() {
 
     const totalRevenue = confirmed.reduce((s, b) => s + (b.price ?? 0), 0);
 
-    return NextResponse.json({
+    return {
       totalRevenue: Math.round(totalRevenue),
       thisMonthRevenue: Math.round(monthMap.get(thisMonth)?.revenue ?? 0),
       upcomingRevenue: Math.round(confirmed.filter((b) => b.arrival >= today).reduce((s, b) => s + (b.price ?? 0), 0)),
@@ -87,7 +90,8 @@ export async function GET() {
           totalNights: d.nights,
           avgStay: d.bookings > 0 ? +(d.nights / d.bookings).toFixed(1) : 0,
         })),
-    });
+    };
+    }));
   } catch (err) {
     console.error('[analytics]', err);
     return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 502 });

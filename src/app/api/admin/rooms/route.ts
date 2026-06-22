@@ -13,27 +13,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { ROOMS } from '@/lib/rooms';
 import { getRoomOverrides, upsertRoomOverride } from '@/lib/supabase';
+import { withCache, invalidate } from '@/lib/server-cache';
+
+const ROOMS_TTL = 10 * 60 * 1000; // 10 minutes
 
 export async function GET() {
-  let overrides: Awaited<ReturnType<typeof getRoomOverrides>> = [];
-  try {
-    overrides = await getRoomOverrides();
-  } catch {
-    // table not yet created — return static config
-  }
+  const rooms = await withCache('rooms:list', ROOMS_TTL, async () => {
+    let overrides: Awaited<ReturnType<typeof getRoomOverrides>> = [];
+    try {
+      overrides = await getRoomOverrides();
+    } catch {
+      // table not yet created — return static config
+    }
 
-  const overrideMap = new Map(overrides.map((o) => [o.room_id, o]));
+    const overrideMap = new Map(overrides.map((o) => [o.room_id, o]));
 
-  const rooms = ROOMS.map((r) => {
-    const o = overrideMap.get(r.id);
-    return {
-      id: r.id,
-      name: o?.name ?? r.name,
-      description: o?.description ?? r.description,
-      maxOccupancy: o?.max_occupancy ?? r.maxOccupancy,
-      rackRateUSD: o?.rack_rate_usd ?? r.rackRateUSD,
-      photos: r.photos,
-    };
+    return ROOMS.map((r) => {
+      const o = overrideMap.get(r.id);
+      return {
+        id: r.id,
+        name: o?.name ?? r.name,
+        description: o?.description ?? r.description,
+        maxOccupancy: o?.max_occupancy ?? r.maxOccupancy,
+        rackRateUSD: o?.rack_rate_usd ?? r.rackRateUSD,
+        photos: r.photos,
+      };
+    });
   });
 
   return NextResponse.json({ rooms });
@@ -58,6 +63,7 @@ export async function PUT(req: NextRequest) {
 
   try {
     await upsertRoomOverride({ room_id: id, name, description, max_occupancy: maxOccupancy, rack_rate_usd: rackRateUSD });
+    invalidate('rooms:');
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('[rooms PUT]', err);
