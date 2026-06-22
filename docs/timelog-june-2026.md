@@ -42,16 +42,20 @@
 | 22 Jul | HostelWorld OTA Setup | 1.0 | Added property rooms to HostelWorld listing and established API connection to sync room inventory and availability between Beds24 and the HostelWorld channel manager. | API credentials required manual retrieval from HostelWorld partner portal; channel sync validation took additional time to confirm live inventory was reflecting correctly. |
 | 23 Jul | Website UI Updates | 2.0 | Implemented active section highlighting on navbar using IntersectionObserver; all "Book Now" buttons converted from anchor scroll links to a modal overlay with the booking search form; updated Facebook and Instagram social links in footer; removed unused third social link; added muted Admin entry point to navbar for property manager access. | None. |
 | 24 Jul | VPS Disk Usage Analysis | 1.5 | Investigated high disk usage on Coolify VPS. Root cause: successive Nixpacks build iterations during the deployment debugging phase generated untagged Docker image layers that were not automatically pruned. Each failed build left behind intermediate image layers (~200–400 MB each) accumulating in `/var/lib/docker`. Documented recommended fix: schedule `docker image prune -f` and `docker builder prune -f` as a periodic maintenance task, or enable Coolify's built-in image cleanup setting. | No immediate action taken pending client approval to run prune commands on production host. |
+| 25 Jul | Admin Dashboard — Channel Badges, Booking Detail & CSV Export | 2.0 | Added OTA channel identification to admin bookings table using Beds24 `referer` field — normalised to display badges (Booking.com, Airbnb, Hostelworld, Expedia, Direct). Implemented click-through booking detail modal showing full guest info, stay details, payment status, and inline confirm/cancel/mark-paid actions. Added CSV export of the current visible bookings view with all fields including channel and payment reference. | None. |
+| 28 Jul | Revenue & Room Performance Modules | 5.0 | Built `GET /api/admin/analytics` aggregating 180-day booking history from Beds24 into monthly revenue, channel breakdown, and room performance data. Built Revenue page with 4 stat cards, horizontal monthly bar chart, channel share table, and avg length-of-stay table. Built Room Performance page showing bookings/revenue/nights/avg-stay per room with revenue share bars. Added room edit modal backed by a new Supabase `room_overrides` table — name, description, rack rate, and max occupancy editable at runtime without a redeploy. | Room overrides required a new Supabase table (`room_overrides`) with graceful fallback to static config if table not yet created. |
+| 29 Jul | Messaging Module & Admin Layout Redesign | 4.0 | Stubbed Beds24 messaging integration (`GET /messages`, `POST /messages`) with inbox UI and threaded reply view; marked coming soon pending channel API validation. Replaced admin top navigation bar with a standard left sidebar layout — dark green brand sidebar with icons and active-state indicator, shared across all admin pages via a Next.js `layout.tsx`. Sidebar carries Bookings, Messages, Revenue, Rooms tabs and New Booking + Logout actions pinned at the bottom. Extended admin bookings lookback with a 30d / 90d / 180d / 1y period selector (default raised from 7 to 30 days). | Sidebar layout required stripping `AdminNav` from every individual page and restructuring each page's root wrapper to sit inside the shared layout. |
+| 30 Jul | New Booking Page Redesign & API Caching | 3.0 | Redesigned the New Booking admin form into a two-column layout: stay details and guest fields on the left, a live booking summary card (room, nights, auto-calculated total) with pricing override, notes, and action buttons on the right. Added server-side in-memory caching (`src/lib/server-cache.ts`) to all three admin API routes — bookings 2-minute TTL, analytics 5-minute TTL, rooms 10-minute TTL — with write-through invalidation on booking creation and room edits so navigating between admin sections is instant on repeat visits. | None. |
 
-**July subtotal: 4.5 hrs**
+**July subtotal: 18.5 hrs**
 
 ---
 
-## Total: 36.5 hours
+## Total: 50.5 hours
 
 | Month | Hours |
 |-------|-------|
 | May 2026 | 16.0 |
 | June 2026 | 16.0 |
-| July 2026 | 4.5 |
-| **Total** | **36.5** |
+| July 2026 | 18.5 |
+| **Total** | **50.5** |
