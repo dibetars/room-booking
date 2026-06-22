@@ -179,6 +179,45 @@ export async function getBookings(params: {
   return Array.isArray(json) ? json : (json?.data ?? []);
 }
 
+export interface Beds24Message {
+  id: number;
+  bookingId: number;
+  time: string;
+  message: string;
+  type: 'guest' | 'owner' | 'system' | 'internal';
+  from?: string;
+}
+
+export async function getMessages(params: {
+  bookingId?: number;
+  startDate?: string;
+  endDate?: string;
+} = {}): Promise<Beds24Message[]> {
+  const query = new URLSearchParams();
+  if (params.bookingId) query.set('bookingId', String(params.bookingId));
+  if (params.startDate) query.set('startDate', params.startDate);
+  if (params.endDate) query.set('endDate', params.endDate);
+
+  const res = await beds24Fetch(`/messages?${query}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Beds24 getMessages failed: ${res.status} ${body}`);
+  }
+  const json = await res.json();
+  return Array.isArray(json) ? json : (json?.data ?? []);
+}
+
+export async function sendMessage(bookingId: number, message: string): Promise<void> {
+  const res = await beds24Fetch('/messages', {
+    method: 'POST',
+    body: JSON.stringify([{ bookingId, message, type: 'owner' }]),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Beds24 sendMessage failed: ${res.status} ${body}`);
+  }
+}
+
 export async function refreshTokenForCron(): Promise<void> {
   cachedToken = null;
   tokenExpiresAt = 0;
