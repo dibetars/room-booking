@@ -540,13 +540,13 @@ export default function HomePage() {
               <p>Address: Busua, Western Region, Ghana</p>
             </div>
             <div className="flex gap-3">
-              <a href="https://www.facebook.com/bokobokoguesthouse" target="_blank" rel="noopener"
+              <a href="https://www.facebook.com/61568546901973/about/" target="_blank" rel="noopener"
                 className="bg-[#BE6A45] hover:bg-[#a85a38] transition-colors p-3 rounded-lg">
                 <svg width="20" height="20" fill="white" viewBox="0 0 24 24">
                   <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
                 </svg>
               </a>
-              <a href="https://www.instagram.com/bokobokoguesthouse" target="_blank" rel="noopener"
+              <a href="https://www.instagram.com/bokobokoopc_/" target="_blank" rel="noopener"
                 className="bg-[#BE6A45] hover:bg-[#a85a38] transition-colors p-3 rounded-lg">
                 <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
