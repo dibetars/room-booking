@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { BookingIntent } from '@/types';
-import AdminNav from './_components/AdminNav';
 
 interface AdminBooking {
   id?: number;
@@ -153,10 +152,7 @@ export default function AdminDashboard() {
 
   return (
     <>
-    <div className="min-h-screen bg-[#f5f0e8]">
-      <AdminNav />
-
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           {[
@@ -325,7 +321,6 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
-    </div>
 
     {/* Booking Detail Modal */}
 

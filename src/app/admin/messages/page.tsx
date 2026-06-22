@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import AdminNav from '../_components/AdminNav';
 
 interface Message {
   id: number;
@@ -118,10 +117,7 @@ export default function MessagesPage() {
   const totalUnread = conversations.reduce((s, c) => s + c.unread, 0);
 
   return (
-    <div className="min-h-screen bg-[#f5f0e8] flex flex-col">
-      <AdminNav />
-
-      <div className="flex flex-1 max-w-6xl w-full mx-auto px-4 py-6 gap-4" style={{ height: 'calc(100vh - 72px)' }}>
+    <div className="flex px-4 py-6 gap-4 w-full" style={{ height: 'calc(100vh - 48px)' }}>
 
         {/* Conversation list */}
         <div className="w-80 shrink-0 bg-white rounded-2xl shadow flex flex-col overflow-hidden">
@@ -254,7 +250,6 @@ export default function MessagesPage() {
             </>
           )}
         </div>
-      </div>
     </div>
   );
 }

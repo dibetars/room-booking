@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import AdminNav from '../_components/AdminNav';
 
 interface RoomConfig {
   id: number;
@@ -78,10 +77,8 @@ export default function RoomsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f0e8]">
-      <AdminNav />
-
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+    <>
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
         {loading && <div className="py-20 text-center text-gray-400">Loading room data…</div>}
 
         {!loading && (
@@ -222,6 +219,6 @@ export default function RoomsPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

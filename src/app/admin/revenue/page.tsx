@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import AdminNav from '../_components/AdminNav';
 
 interface MonthlyRevenue {
   month: string;
@@ -52,10 +51,7 @@ export default function RevenuePage() {
   const maxMonthlyRevenue = data ? Math.max(...data.monthlyRevenue.map((m) => m.revenue), 1) : 1;
 
   return (
-    <div className="min-h-screen bg-[#f5f0e8]">
-      <AdminNav />
-
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
         {loading && <div className="py-20 text-center text-gray-400">Loading analytics…</div>}
         {error && <div className="py-20 text-center text-red-500">{error}</div>}
 
@@ -171,7 +167,6 @@ export default function RevenuePage() {
             </div>
           </>
         )}
-      </div>
     </div>
   );
 }
