@@ -9,6 +9,9 @@ function tomorrowStr() {
   const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10);
 }
 
+const INPUT = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#2d5a27] bg-white';
+const LABEL = 'block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5';
+
 export default function NewBookingPage() {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -70,128 +73,130 @@ export default function NewBookingPage() {
       return;
     }
 
-    setSuccess(`Booking created — Ref: ${data.reference} · Beds24 ID: ${data.beds24Id}`);
+    setSuccess(`Booking created — Beds24 ID: ${data.beds24Id}`);
     setSubmitting(false);
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f0e8] px-4 py-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => router.push('/admin')} className="text-[#2d5a27] text-sm hover:underline">← Dashboard</button>
-          <h1 className="text-xl font-bold text-[#333]">New Booking</h1>
-        </div>
+    <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow p-6 space-y-5">
-          {/* Room & Dates */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-600 mb-1">Room</label>
-              <select
-                value={form.roomId}
-                onChange={(e) => set('roomId', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]"
-              >
-                {ROOMS.map((r) => (
-                  <option key={r.id} value={r.id}>{r.name} (${r.rackRateUSD}/night)</option>
-                ))}
-              </select>
-            </div>
+      {/* Page header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">New Booking</h1>
+        <p className="text-sm text-gray-400 mt-0.5">Create a manual reservation directly in Beds24</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+
+        {/* Stay details */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+          <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Stay</h2>
+
+          <div>
+            <label className={LABEL}>Room</label>
+            <select value={form.roomId} onChange={(e) => set('roomId', e.target.value)} className={INPUT}>
+              {ROOMS.map((r) => (
+                <option key={r.id} value={r.id}>{r.name} — ${r.rackRateUSD}/night</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Check-in</label>
+              <label className={LABEL}>Check-in</label>
               <input type="date" value={form.checkIn} min={todayStr()} required
-                onChange={(e) => set('checkIn', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]" />
+                onChange={(e) => set('checkIn', e.target.value)} className={INPUT} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Check-out</label>
+              <label className={LABEL}>Check-out</label>
               <input type="date" value={form.checkOut} min={form.checkIn} required
-                onChange={(e) => set('checkOut', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]" />
+                onChange={(e) => set('checkOut', e.target.value)} className={INPUT} />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Adults</label>
-              <select value={form.adults} onChange={(e) => set('adults', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]">
+              <label className={LABEL}>Adults</label>
+              <select value={form.adults} onChange={(e) => set('adults', e.target.value)} className={INPUT}>
                 {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>{n}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Children</label>
-              <select value={form.children} onChange={(e) => set('children', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]">
+              <label className={LABEL}>Children</label>
+              <select value={form.children} onChange={(e) => set('children', e.target.value)} className={INPUT}>
                 {[0,1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
               </select>
             </div>
           </div>
 
-          <hr className="border-gray-100" />
+          {/* Stay summary pill */}
+          <div className="bg-[#f5f0e8] rounded-xl px-4 py-3 flex items-center justify-between text-sm">
+            <span className="text-gray-600">{nights} night{nights !== 1 ? 's' : ''} · {room.name}</span>
+            <span className="font-bold text-[#2d5a27]">${autoPrice}</span>
+          </div>
+        </div>
 
-          {/* Guest */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Guest info */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+          <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Guest</h2>
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">First name</label>
+              <label className={LABEL}>First name</label>
               <input type="text" value={form.guestFirstName} required
-                onChange={(e) => set('guestFirstName', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]" />
+                onChange={(e) => set('guestFirstName', e.target.value)} className={INPUT} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Last name</label>
+              <label className={LABEL}>Last name</label>
               <input type="text" value={form.guestLastName} required
-                onChange={(e) => set('guestLastName', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]" />
+                onChange={(e) => set('guestLastName', e.target.value)} className={INPUT} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+              <label className={LABEL}>Email</label>
               <input type="email" value={form.email} required
-                onChange={(e) => set('email', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]" />
+                onChange={(e) => set('email', e.target.value)} className={INPUT} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Phone</label>
+              <label className={LABEL}>Phone</label>
               <input type="tel" value={form.phone}
-                onChange={(e) => set('phone', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]" />
+                onChange={(e) => set('phone', e.target.value)} className={INPUT} />
             </div>
           </div>
+        </div>
 
-          <hr className="border-gray-100" />
-
-          {/* Price */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+        {/* Pricing & notes */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+          <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Pricing &amp; Notes</h2>
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                Price override (USD) <span className="text-gray-400 font-normal">— leave blank to use rack rate</span>
-              </label>
+              <label className={LABEL}>Price override (USD)</label>
               <input type="number" step="0.01" min="0" value={form.priceOverride}
-                placeholder={`Auto: $${autoPrice} (${nights} night${nights !== 1 ? 's' : ''})`}
-                onChange={(e) => set('priceOverride', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]" />
+                placeholder={`Auto: $${autoPrice}`}
+                onChange={(e) => set('priceOverride', e.target.value)} className={INPUT} />
+              <p className="text-[11px] text-gray-400 mt-1">Leave blank to use rack rate</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Notes</label>
+              <label className={LABEL}>Internal notes</label>
               <input type="text" value={form.notes}
-                placeholder="Internal notes (stored in Beds24)"
-                onChange={(e) => set('notes', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]" />
+                placeholder="Stored in Beds24"
+                onChange={(e) => set('notes', e.target.value)} className={INPUT} />
             </div>
           </div>
+        </div>
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          {success && <p className="text-green-700 text-sm font-medium">{success}</p>}
+        {error && <p className="text-red-600 text-sm bg-red-50 rounded-xl px-4 py-3">{error}</p>}
+        {success && <p className="text-green-700 text-sm font-medium bg-green-50 rounded-xl px-4 py-3">{success}</p>}
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => router.push('/admin')}
-              className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg hover:bg-gray-50 transition-colors">
-              Cancel
-            </button>
-            <button type="submit" disabled={submitting}
-              className="flex-1 bg-[#2d5a27] text-white font-semibold py-2.5 rounded-lg hover:bg-[#245020] transition-colors disabled:opacity-60">
-              {submitting ? 'Creating…' : 'Create Booking'}
-            </button>
-          </div>
-        </form>
-      </div>
+        <div className="flex gap-3">
+          <button type="button" onClick={() => router.push('/admin')}
+            className="flex-1 border border-gray-200 text-gray-600 font-medium py-2.5 rounded-xl hover:bg-gray-50 transition-colors text-sm">
+            Cancel
+          </button>
+          <button type="submit" disabled={submitting}
+            className="flex-1 bg-[#2d5a27] text-white font-semibold py-2.5 rounded-xl hover:bg-[#245020] transition-colors disabled:opacity-60 text-sm">
+            {submitting ? 'Creating…' : 'Create Booking'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
