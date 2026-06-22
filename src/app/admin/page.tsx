@@ -17,6 +17,7 @@ interface AdminBooking {
   phone?: string;
   status: string;
   price?: number;
+  referer?: string;
   info?: string;
   intent: BookingIntent | null;
 }
@@ -36,6 +37,19 @@ const PAYMENT_COLORS: Record<string, string> = {
   CANCELLED: 'bg-red-100 text-red-800',
   RECONCILE_NEEDED: 'bg-orange-100 text-orange-800',
 };
+
+const CHANNEL_BADGES: Record<string, { label: string; className: string }> = {
+  'booking.com':    { label: 'Booking.com',   className: 'bg-blue-100 text-blue-700' },
+  'airbnb':         { label: 'Airbnb',         className: 'bg-rose-100 text-rose-700' },
+  'hostelworld':    { label: 'Hostelworld',    className: 'bg-purple-100 text-purple-700' },
+  'expedia':        { label: 'Expedia',        className: 'bg-yellow-100 text-yellow-800' },
+  'bokoboko admin': { label: 'Admin',          className: 'bg-gray-100 text-gray-600' },
+};
+
+function channelBadge(referer?: string) {
+  if (!referer) return { label: 'Direct', className: 'bg-green-100 text-green-700' };
+  return CHANNEL_BADGES[referer.toLowerCase()] ?? { label: referer, className: 'bg-gray-100 text-gray-600' };
+}
 
 const ROOM_NAMES: Record<number, string> = {
   2634263: 'Bungalow 1',
@@ -177,6 +191,7 @@ export default function AdminDashboard() {
                     <th className="text-left px-4 py-3">Room</th>
                     <th className="text-left px-4 py-3">Dates</th>
                     <th className="text-left px-4 py-3">Guests</th>
+                    <th className="text-left px-4 py-3">Channel</th>
                     <th className="text-left px-4 py-3">Beds24</th>
                     <th className="text-left px-4 py-3">Payment</th>
                     <th className="text-left px-4 py-3">Ref</th>
@@ -206,6 +221,13 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-4 py-3 text-gray-700">
                           {b.numAdult}A {b.numChild > 0 ? `${b.numChild}C` : ''}
+                        </td>
+                        <td className="px-4 py-3">
+                          {(() => { const ch = channelBadge(b.referer); return (
+                            <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${ch.className}`}>
+                              {ch.label}
+                            </span>
+                          ); })()}
                         </td>
                         <td className="px-4 py-3">
                           <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[b.status] ?? 'bg-gray-100 text-gray-600'}`}>
