@@ -67,6 +67,26 @@ export async function getIntentByBeds24Id(beds24Id: number): Promise<BookingInte
   return data;
 }
 
+export interface RoomOverride {
+  room_id: number;
+  name: string | null;
+  description: string | null;
+  max_occupancy: number | null;
+  rack_rate_usd: number | null;
+}
+
+export async function getRoomOverrides(): Promise<RoomOverride[]> {
+  const { data } = await getClient().from('room_overrides').select();
+  return data ?? [];
+}
+
+export async function upsertRoomOverride(override: RoomOverride): Promise<void> {
+  const { error } = await getClient()
+    .from('room_overrides')
+    .upsert({ ...override, updated_at: new Date().toISOString() }, { onConflict: 'room_id' });
+  if (error) throw error;
+}
+
 export async function getExpiredHeldIntents(): Promise<BookingIntent[]> {
   const { data, error } = await getClient()
     .from('booking_intents')

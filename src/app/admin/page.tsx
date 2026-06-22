@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { BookingIntent } from '@/types';
+import AdminNav from './_components/AdminNav';
 
 interface AdminBooking {
   id?: number;
@@ -138,11 +139,6 @@ export default function AdminDashboard() {
     URL.revokeObjectURL(url);
   }
 
-  async function logout() {
-    await fetch('/api/admin/login', { method: 'DELETE' });
-    router.push('/admin/login');
-  }
-
   const today = new Date().toISOString().slice(0, 10);
   const todayArrivals = bookings.filter((b) => b.arrival === today && b.status !== 'cancelled');
   const todayDepartures = bookings.filter((b) => b.departure === today && b.status !== 'cancelled');
@@ -157,21 +153,7 @@ export default function AdminDashboard() {
   return (
     <>
     <div className="min-h-screen bg-[#f5f0e8]">
-      {/* Header */}
-      <header className="bg-[#2d5a27] text-white px-5 py-4 flex items-center justify-between">
-        <h1 className="font-bold text-lg">BokoBoko Admin</h1>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push('/admin/new-booking')}
-            className="bg-white text-[#2d5a27] font-semibold text-sm px-4 py-1.5 rounded-lg hover:bg-[#f5f0e8] transition-colors"
-          >
-            + New Booking
-          </button>
-          <button onClick={logout} className="text-white/70 text-sm hover:text-white transition-colors">
-            Logout
-          </button>
-        </div>
-      </header>
+      <AdminNav />
 
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
         {/* Stats */}
