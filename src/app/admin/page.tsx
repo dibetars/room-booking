@@ -80,17 +80,18 @@ export default function AdminDashboard() {
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [filter, setFilter] = useState<'upcoming' | 'today' | 'all'>('upcoming');
   const [detailBooking, setDetailBooking] = useState<AdminBooking | null>(null);
+  const [daysBack, setDaysBack] = useState(30);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
-    const res = await fetch('/api/admin/bookings?daysBack=7&daysAhead=60');
+    const res = await fetch(`/api/admin/bookings?daysBack=${daysBack}&daysAhead=60`);
     if (res.status === 401) { router.push('/admin/login'); return; }
     const data = await res.json();
     if (!res.ok) { setError(data.error ?? 'Failed to load'); setLoading(false); return; }
     setBookings(data.bookings ?? []);
     setLoading(false);
-  }, [router]);
+  }, [router, daysBack]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -171,7 +172,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {(['upcoming', 'today', 'all'] as const).map((f) => (
             <button
               key={f}
@@ -180,9 +181,23 @@ export default function AdminDashboard() {
                 filter === f ? 'bg-[#2d5a27] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
               }`}
             >
-              {f === 'upcoming' ? 'Upcoming' : f === 'today' ? 'Today' : 'All (7d)'}
+              {f === 'upcoming' ? 'Upcoming' : f === 'today' ? 'Today' : 'All'}
             </button>
           ))}
+          <div className="flex items-center gap-1 bg-white rounded-lg px-2 border border-gray-200">
+            <span className="text-xs text-gray-400 pr-1">History:</span>
+            {([30, 90, 180, 365] as const).map((d) => (
+              <button
+                key={d}
+                onClick={() => setDaysBack(d)}
+                className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                  daysBack === d ? 'bg-[#2d5a27] text-white' : 'text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                {d === 365 ? '1y' : `${d}d`}
+              </button>
+            ))}
+          </div>
           <div className="ml-auto flex gap-2">
             <button onClick={load} className="text-sm text-gray-500 hover:text-gray-700 px-3">
               ↻ Refresh
