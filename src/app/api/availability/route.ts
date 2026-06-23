@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkAvailability } from '@/lib/beds24';
 import { ROOMS } from '@/lib/rooms';
+import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 const schema = z.object({
   checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -11,6 +12,11 @@ const schema = z.object({
 });
 
 export async function GET(req: NextRequest) {
+  const ip = getClientIp(req);
+  if (!rateLimit(`availability:${ip}`, 20, 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+  }
+
   const { searchParams } = req.nextUrl;
   const parsed = schema.safeParse({
     checkIn: searchParams.get('checkIn'),

@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { getExpiredHeldIntents, updateIntentStatus } from '@/lib/supabase';
 import { updateBookingStatus, refreshTokenForCron } from '@/lib/beds24';
 
+function isValidCronSecret(provided: string | null): boolean {
+  const expected = process.env.CRON_SECRET;
+  if (!provided || !expected) return false;
+  const providedBuf = Buffer.from(provided);
+  const expectedBuf = Buffer.from(expected);
+  if (providedBuf.length !== expectedBuf.length) return false;
+  return crypto.timingSafeEqual(providedBuf, expectedBuf);
+}
+
 export async function GET(req: NextRequest) {
-  const cronSecret = req.headers.get('x-cron-secret');
-  if (cronSecret !== process.env.CRON_SECRET) {
+  if (!isValidCronSecret(req.headers.get('x-cron-secret'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

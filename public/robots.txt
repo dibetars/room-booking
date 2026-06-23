@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /admin
+Allow: /
+
+Sitemap: https://book.bokoboko.org/sitemap.xml
