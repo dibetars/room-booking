@@ -1,13 +1,13 @@
 # Room Booking Project Summary
 
 ## Project Overview
-A React-based room booking application that integrates Smoobu for room management and Paystack for payment processing in Ghana Cedis (GHS). The application provides a seamless booking experience with a three-step process: availability check, room selection, and payment processing. The website features a modern, eco-friendly design that reflects BokoBoko's commitment to sustainability.
+A React-based room booking application that integrates Beds24 for room management and Paystack for payment processing in Ghana Cedis (GHS). The application provides a seamless booking experience with a three-step process: availability check, room selection, and payment processing. The website features a modern, eco-friendly design that reflects BokoBoko's commitment to sustainability.
 
 ## Technical Stack
 - **Frontend**: React with TypeScript
 - **Build Tool**: Vite
 - **Payment Gateway**: Paystack (Direct Charge API for Mobile Money and Card Payments)
-- **Booking System**: Smoobu
+- **Booking System**: Beds24
 - **Currency**: Ghana Cedis (GHS) with live exchange rate
 - **Backend**: Express.js with Node.js
 - **Styling**: CSS with custom animations
@@ -254,21 +254,6 @@ class PaymentService {
 - Error handling and logging
 - Type safety with TypeScript
 
-### Smoobu Integration
-- Custom availability check endpoint
-- Room details endpoint
-- API key management
-- Error handling and logging
-
-### Backend API Endpoints
-```javascript
-// Availability Check
-POST /api/check-availability
-
-// Room Details
-GET /api/room-details/:apartmentId
-```
-
 ## Security Features
 - Environment variables for sensitive data
 - CORS configuration
@@ -335,8 +320,6 @@ GET /api/room-details/:apartmentId
 
 ## Environment Setup
 Required environment variables:
-- `SMOOBU_API_KEY`: Smoobu API key
-- `PORT`: Server port (default: 3001)
 - `PAYSTACK_SECRET_KEY`: Paystack secret key
 - `EXCHANGE_RATE_API_KEY`: ExchangeRate-API key
 
