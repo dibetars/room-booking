@@ -226,7 +226,7 @@ public/
 ```typescript
 // Payment Service Implementation
 class PaymentService {
-  private readonly PAYSTACK_SECRET_KEY = 'sk_live_ee13d5a26dc8668ae9b2ed4531d577576426c5e6';
+  private readonly PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
   private readonly PAYSTACK_API_URL = 'https://api.paystack.co';
   
   // Mobile money payment initiation

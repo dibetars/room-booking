@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifySessionToken } from '@/lib/admin-session';
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (pathname === '/admin/login' || pathname === '/api/admin/login') {
@@ -10,7 +11,9 @@ export function middleware(req: NextRequest) {
   const token = req.cookies.get('admin_token')?.value;
   const secret = process.env.ADMIN_SECRET;
 
-  if (!token || !secret || token !== secret) {
+  const valid = !!token && !!secret && await verifySessionToken(token, secret);
+
+  if (!valid) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

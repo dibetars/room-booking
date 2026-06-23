@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createLead, createContact } from "@/lib/zoho";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
   firstName: z.string().min(1),
@@ -11,6 +12,11 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req);
+  if (!rateLimit(`zoho-lead:${ip}`, 10, 10 * 60 * 1000)) {
+    return NextResponse.json({ error: "Too many requests. Please try again shortly." }, { status: 429 });
+  }
+
   let body: unknown;
   try {
     body = await req.json();

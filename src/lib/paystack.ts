@@ -79,5 +79,8 @@ export function verifyWebhookSignature(rawBody: Buffer, signature: string): bool
     .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY!)
     .update(rawBody)
     .digest('hex');
-  return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
+  const hashBuf = Buffer.from(hash);
+  const sigBuf = Buffer.from(signature);
+  if (hashBuf.length !== sigBuf.length) return false;
+  return crypto.timingSafeEqual(hashBuf, sigBuf);
 }

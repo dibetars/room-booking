@@ -4,12 +4,15 @@ import { createLead, createMeeting } from "@/lib/zoho";
 
 function verifySignature(payload: string, signature: string): boolean {
   const secret = process.env.CALENDLY_WEBHOOK_SIGNING_KEY;
-  if (!secret) return true; // skip verification in dev if key not set
+  if (!secret) return false; // fail closed — webhook is disabled until a signing key is configured
   const expected = crypto
     .createHmac("sha256", secret)
     .update(payload)
     .digest("hex");
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+  const expectedBuf = Buffer.from(expected);
+  const sigBuf = Buffer.from(signature);
+  if (expectedBuf.length !== sigBuf.length) return false;
+  return crypto.timingSafeEqual(expectedBuf, sigBuf);
 }
 
 export async function POST(req: NextRequest) {

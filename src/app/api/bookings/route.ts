@@ -4,6 +4,7 @@ import { createBooking } from '@/lib/beds24';
 import { createIntent, getIntentByRef } from '@/lib/supabase';
 import { generateReference } from '@/lib/booking-ref';
 import { ROOMS } from '@/lib/rooms';
+import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 const schema = z.object({
   roomId: z.number().int().positive(),
@@ -22,7 +23,14 @@ const schema = z.object({
 const recentRequests = new Map<string, number>();
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for') ?? 'unknown';
+  const ip = getClientIp(req);
+
+  // Cap holds per IP — prevents an attacker from spamming fake "request"
+  // bookings to lock out room availability for real guests.
+  if (!rateLimit(`bookings:${ip}`, 8, 10 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many requests. Please wait a moment and try again.' }, { status: 429 });
+  }
+
   const body = await req.json().catch(() => null);
 
   if (!body) {

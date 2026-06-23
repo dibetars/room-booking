@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createSessionToken } from '@/lib/admin-session';
+import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req);
+  if (!rateLimit(`admin-login:${ip}`, 6, 15 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many attempts. Try again in a few minutes.' }, { status: 429 });
+  }
+
   const { password } = await req.json().catch(() => ({}));
   const adminPassword = process.env.ADMIN_PASSWORD;
   const adminSecret = process.env.ADMIN_SECRET;
@@ -14,7 +21,8 @@ export async function POST(req: NextRequest) {
     req.nextUrl.protocol === 'https:';
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set('admin_token', adminSecret, {
+  const token = await createSessionToken(adminSecret);
+  res.cookies.set('admin_token', token, {
     httpOnly: true,
     secure: isHttps,
     sameSite: 'lax',
