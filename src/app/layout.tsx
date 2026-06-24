@@ -12,11 +12,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const TAGLINE = "Eco-Friendly Accommodation Built with Sustainable Comfort in Mind";
+
 export const metadata: Metadata = {
-  title: "BokoBoko",
-  description: "Eco-friendly beachfront accommodation in Busua, Ghana. Book your stay directly with us.",
+  title: {
+    default: `BokoBoko — ${TAGLINE}`,
+    template: "%s · BokoBoko",
+  },
+  description: TAGLINE,
   icons: {
     icon: '/images/Boko-Logo.png',
+  },
+  openGraph: {
+    title: `BokoBoko — ${TAGLINE}`,
+    description: TAGLINE,
+    type: "website",
+    images: ['/images/Boko-Logo.png'],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `BokoBoko — ${TAGLINE}`,
+    description: TAGLINE,
+    images: ['/images/Boko-Logo.png'],
   },
 };
 
