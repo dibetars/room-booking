@@ -31,7 +31,10 @@ export async function GET() {
     const from = new Date(Date.now() - 180 * 86400000).toISOString().slice(0, 10);
     const to = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
     const all = await getBookings({ startArrival: from, endArrival: to });
-    const confirmed = all.filter((b) => b.status === 'confirmed');
+    // Count any real booking toward revenue: OTA bookings (Booking.com, Airbnb)
+    // land as 'new', direct paid bookings as 'confirmed'. Exclude only
+    // cancelled bookings, unpaid direct holds ('request'), and owner blocks.
+    const confirmed = all.filter((b) => b.status === 'confirmed' || b.status === 'new');
     const today = new Date().toISOString().slice(0, 10);
     const thisMonth = today.slice(0, 7);
 
