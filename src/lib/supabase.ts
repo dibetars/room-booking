@@ -87,6 +87,33 @@ export async function upsertRoomOverride(override: RoomOverride): Promise<void> 
   if (error) throw error;
 }
 
+// Runtime key-value settings (e.g. payments on/off). Requires:
+//   CREATE TABLE IF NOT EXISTS app_settings (
+//     key TEXT PRIMARY KEY,
+//     value JSONB,
+//     updated_at TIMESTAMPTZ DEFAULT NOW()
+//   );
+export async function getSetting<T>(key: string, fallback: T): Promise<T> {
+  try {
+    const { data, error } = await getClient()
+      .from('app_settings')
+      .select('value')
+      .eq('key', key)
+      .single();
+    if (error || data?.value == null) return fallback;
+    return data.value as T;
+  } catch {
+    return fallback;
+  }
+}
+
+export async function setSetting(key: string, value: unknown): Promise<void> {
+  const { error } = await getClient()
+    .from('app_settings')
+    .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+  if (error) throw error;
+}
+
 export async function getExpiredHeldIntents(): Promise<BookingIntent[]> {
   const { data, error } = await getClient()
     .from('booking_intents')

@@ -58,11 +58,20 @@ export default function HomePage() {
   const [phone, setPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState('');
+  const [bookingSuccess, setBookingSuccess] = useState<{ reference: string } | null>(null);
+  const [paymentsEnabled, setPaymentsEnabled] = useState(true);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', fn);
     return () => window.removeEventListener('scroll', fn);
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((d) => setPaymentsEnabled(d.paymentsEnabled !== false))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -121,6 +130,13 @@ export default function HomePage() {
 
       const data = await res.json();
       if (!res.ok) { setBookingError(data.error ?? 'Booking failed. Please try again.'); setSubmitting(false); return; }
+
+      // Manual mode (payments disabled): no Paystack, show confirmation.
+      if (data.manual) {
+        setBookingSuccess({ reference: data.reference });
+        setSubmitting(false);
+        return;
+      }
 
       const { reference, amountPesewas } = data;
       const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ?? '';
@@ -358,57 +374,92 @@ export default function HomePage() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-gray-800">Complete Booking</h2>
-                <button onClick={() => { setSelectedRoom(null); setBookingError(''); setSubmitting(false); }}
+                <h2 className="text-lg font-bold text-gray-800">
+                  {bookingSuccess ? 'Booking Received' : paymentsEnabled ? 'Complete Booking' : 'Request to Book'}
+                </h2>
+                <button onClick={() => { setSelectedRoom(null); setBookingError(''); setSubmitting(false); setBookingSuccess(null); }}
                   className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
               </div>
 
-              {/* Summary */}
-              <div className="bg-[#f5f0e8] rounded-xl p-4 space-y-1">
-                <p className="font-semibold text-gray-800">{selectedRoom.name}</p>
-                <p className="text-sm text-gray-500">{fmt(checkIn)} → {fmt(checkOut)} · {nights} night{nights !== 1 ? 's' : ''}</p>
-                <div className="flex justify-between items-baseline mt-2">
-                  <span className="text-sm text-gray-500">${selectedRoom.rackRateUSD} × {nights} night{nights !== 1 ? 's' : ''}</span>
-                  <span className="font-bold text-[#BE6A45]">${selectedRoom.rackRateUSD * nights}</span>
-                </div>
-              </div>
-
-              {/* Guest form */}
-              <form onSubmit={handleBook} className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Full name</label>
-                  <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Kwame Mensah"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#BE6A45]" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="kwame@example.com"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#BE6A45]" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Phone (for MoMo confirmation)</label>
-                  <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="024 000 0000"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#BE6A45]" />
-                </div>
-
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-2 font-medium">Accepted payment methods</p>
-                  <div className="flex flex-wrap gap-2 text-xs font-semibold">
-                    <span className="bg-[#ffcc00] text-black px-2 py-1 rounded">MTN MoMo</span>
-                    <span className="bg-[#e40087] text-white px-2 py-1 rounded">Telecel Cash</span>
-                    <span className="bg-[#00539b] text-white px-2 py-1 rounded">AT Money</span>
-                    <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded">Visa / Mastercard</span>
+              {bookingSuccess ? (
+                /* Manual-mode success */
+                <div className="text-center py-4 space-y-3">
+                  <div className="mx-auto w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg width="28" height="28" fill="none" stroke="#2d5a27" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
                   </div>
+                  <h3 className="text-lg font-bold text-[#2d5a27]">Thank you, {name.split(' ')[0]}!</h3>
+                  <p className="text-sm text-gray-600">
+                    Your booking request for <span className="font-semibold">{selectedRoom.name}</span> ({fmt(checkIn)} → {fmt(checkOut)}) has been received and your dates are held.
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    We&apos;ll contact you shortly at <span className="font-semibold">{email}</span> to confirm and arrange payment.
+                  </p>
+                  <p className="text-xs text-gray-400">Reference: <span className="font-mono">{bookingSuccess.reference}</span></p>
+                  <button onClick={() => { setSelectedRoom(null); setBookingSuccess(null); setName(''); setEmail(''); setPhone(''); }}
+                    className="mt-2 w-full bg-[#2d5a27] hover:bg-[#245020] text-white font-bold py-3 rounded-xl transition-colors">
+                    Done
+                  </button>
                 </div>
+              ) : (
+                <>
+                  {/* Summary */}
+                  <div className="bg-[#f5f0e8] rounded-xl p-4 space-y-1">
+                    <p className="font-semibold text-gray-800">{selectedRoom.name}</p>
+                    <p className="text-sm text-gray-500">{fmt(checkIn)} → {fmt(checkOut)} · {nights} night{nights !== 1 ? 's' : ''}</p>
+                    <div className="flex justify-between items-baseline mt-2">
+                      <span className="text-sm text-gray-500">${selectedRoom.rackRateUSD} × {nights} night{nights !== 1 ? 's' : ''}</span>
+                      <span className="font-bold text-[#BE6A45]">${selectedRoom.rackRateUSD * nights}</span>
+                    </div>
+                  </div>
 
-                {bookingError && <p className="text-red-600 text-sm">{bookingError}</p>}
+                  {/* Guest form */}
+                  <form onSubmit={handleBook} className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">Full name</label>
+                      <input type="text" value={name} onChange={e => setName(e.target.value)} required placeholder="Kwame Mensah"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#BE6A45]" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+                      <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="kwame@example.com"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#BE6A45]" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        Phone {paymentsEnabled ? '(for MoMo confirmation)' : '(so we can reach you)'}
+                      </label>
+                      <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required={!paymentsEnabled} placeholder="024 000 0000"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#BE6A45]" />
+                    </div>
 
-                <button type="submit" disabled={submitting}
-                  className="w-full bg-[#BE6A45] hover:bg-[#a85a38] text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-60">
-                  {submitting ? 'Opening payment…' : `Pay $${selectedRoom.rackRateUSD * nights}`}
-                </button>
-                <p className="text-xs text-gray-400 text-center">Secure payment powered by Paystack.</p>
-              </form>
+                    {paymentsEnabled ? (
+                      <div className="bg-gray-50 rounded-xl p-3">
+                        <p className="text-xs text-gray-500 mb-2 font-medium">Accepted payment methods</p>
+                        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                          <span className="bg-[#ffcc00] text-black px-2 py-1 rounded">MTN MoMo</span>
+                          <span className="bg-[#e40087] text-white px-2 py-1 rounded">Telecel Cash</span>
+                          <span className="bg-[#00539b] text-white px-2 py-1 rounded">AT Money</span>
+                          <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded">Visa / Mastercard</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-[#f5f0e8] rounded-xl p-3">
+                        <p className="text-xs text-gray-600">No payment is taken now. We&apos;ll hold your dates and contact you to confirm and arrange payment.</p>
+                      </div>
+                    )}
+
+                    {bookingError && <p className="text-red-600 text-sm">{bookingError}</p>}
+
+                    <button type="submit" disabled={submitting}
+                      className="w-full bg-[#BE6A45] hover:bg-[#a85a38] text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-60">
+                      {paymentsEnabled
+                        ? (submitting ? 'Opening payment…' : `Pay $${selectedRoom.rackRateUSD * nights}`)
+                        : (submitting ? 'Sending request…' : 'Request to Book')}
+                    </button>
+                    {paymentsEnabled && <p className="text-xs text-gray-400 text-center">Secure payment powered by Paystack.</p>}
+                  </form>
+                </>
+              )}
             </div>
           </div>
         </div>

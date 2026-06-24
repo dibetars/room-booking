@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createBooking } from '@/lib/beds24';
-import { createIntent, getIntentByRef } from '@/lib/supabase';
+import { createIntent, getIntentByRef, getSetting } from '@/lib/supabase';
 import { generateReference } from '@/lib/booking-ref';
 import { ROOMS } from '@/lib/rooms';
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
@@ -72,10 +72,56 @@ export async function POST(req: NextRequest) {
     const amountPesewas = Math.round(priceGHS * 100);
 
     const reference = generateReference();
+
+    // Manual mode (Paystack disabled): create the booking directly as a real
+    // reservation the property follows up on to collect payment offline.
+    const paymentsEnabled = await getSetting<boolean>('payments_enabled', false);
+
+    const [firstName, ...rest] = guest.name.split(' ');
+
+    if (!paymentsEnabled) {
+      const beds24Result = await createBooking({
+        roomId,
+        arrival: checkIn,
+        departure: checkOut,
+        numAdult: adults,
+        numChild: children,
+        guestFirstName: firstName,
+        guestLastName: rest.join(' ') || firstName,
+        email: guest.email,
+        phone: guest.phone,
+        status: 'new', // real booking, blocks dates, shown in admin to confirm
+        price: room.rackRateUSD * nights,
+        referer: 'BokoBoko Direct',
+        info: `Ref: ${reference} — manual payment (Paystack disabled)`,
+      });
+
+      await createIntent({
+        reference,
+        status: 'PAYMENT_PENDING', // payment arranged offline; expires_at=null keeps cron away
+        beds24_booking_id: beds24Result.id,
+        room_id: roomId,
+        check_in: checkIn,
+        check_out: checkOut,
+        adults,
+        children,
+        guest_name: guest.name,
+        guest_email: guest.email,
+        guest_phone: guest.phone ?? null,
+        amount_pesewas: amountPesewas,
+        currency: 'GHS',
+        paystack_status: 'manual',
+        expires_at: null,
+        beds24_raw: beds24Result,
+        paystack_raw: { source: 'manual_mode' },
+      });
+
+      return NextResponse.json({ reference, manual: true });
+    }
+
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
     // 1. Create hold in Beds24 (status=request blocks OTA availability)
-    const [firstName, ...rest] = guest.name.split(' ');
     const beds24Result = await createBooking({
       roomId,
       arrival: checkIn,
