@@ -60,6 +60,24 @@ sections is instant on repeat visits:
 
 Cache is invalidated on writes (new booking, room edit) so data stays correct.
 
+### Payments toggle (manual booking mode)
+A runtime on/off switch for online payments, controlled from a new **Settings**
+page in the admin sidebar — no redeploy needed.
+
+- **Off (manual mode, current default):** a guest "Request to Book" creates a
+  real Beds24 booking (status `new`, blocking the dates) plus a pending-payment
+  record, and the guest sees a "we'll contact you to arrange payment"
+  confirmation. No Paystack involved. The booking appears in the dashboard ready
+  to Confirm once payment is arranged offline.
+- **On (live mode):** the normal Paystack pay-now flow.
+
+The setting is stored in a Supabase `app_settings` key-value table and safely
+defaults to **off** if the table is absent, so the site is never stuck waiting
+on a broken payment provider. Used to keep bookings flowing while Paystack is
+being sorted out.
+
+> Migration (run once): `CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value JSONB, updated_at TIMESTAMPTZ DEFAULT NOW());`
+
 ---
 
 ## Security Hardening
