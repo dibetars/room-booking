@@ -48,12 +48,12 @@ export async function GET(req: NextRequest) {
           referer: booking?.referer,
           messages: [m],
           lastTime: m.time,
-          unread: m.type === 'guest' ? 1 : 0,
+          unread: m.source === 'guest' ? 1 : 0,
         });
       } else {
         existing.messages.push(m);
         if (m.time > existing.lastTime) existing.lastTime = m.time;
-        if (m.type === 'guest') existing.unread++;
+        if (m.source === 'guest') existing.unread++;
       }
     }
 

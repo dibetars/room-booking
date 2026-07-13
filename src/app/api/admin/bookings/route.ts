@@ -17,18 +17,22 @@ export async function GET(req: NextRequest) {
   const to = new Date(Date.now() + daysAhead * 86400000).toISOString().slice(0, 10);
   const cacheKey = `bookings:${daysBack}:${daysAhead}`;
 
-  const bookings = await withCache(cacheKey, BOOKINGS_TTL, async () => {
-    const beds24Bookings = await getBookings({ startArrival: from, endArrival: to });
-    const ids = beds24Bookings.map((b) => b.id).filter((id): id is number => !!id);
-    const intents = await getIntentsByBeds24Ids(ids);
-    const intentMap = new Map(intents.map((i) => [i.beds24_booking_id, i]));
-    return beds24Bookings.map((b) => ({
-      ...b,
-      intent: b.id ? (intentMap.get(b.id) ?? null) : null,
-    }));
-  });
-
-  return NextResponse.json({ bookings });
+  try {
+    const bookings = await withCache(cacheKey, BOOKINGS_TTL, async () => {
+      const beds24Bookings = await getBookings({ startArrival: from, endArrival: to });
+      const ids = beds24Bookings.map((b) => b.id).filter((id): id is number => !!id);
+      const intents = await getIntentsByBeds24Ids(ids);
+      const intentMap = new Map(intents.map((i) => [i.beds24_booking_id, i]));
+      return beds24Bookings.map((b) => ({
+        ...b,
+        intent: b.id ? (intentMap.get(b.id) ?? null) : null,
+      }));
+    });
+    return NextResponse.json({ bookings });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to load bookings';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 const createSchema = z.object({
@@ -65,43 +69,48 @@ export async function POST(req: NextRequest) {
   const amountPesewas = Math.round(finalPriceGHS * 100);
   const reference = generateReference();
 
-  const beds24Result = await createBooking({
-    roomId,
-    arrival: checkIn,
-    departure: checkOut,
-    numAdult: adults,
-    numChild: children,
-    guestFirstName,
-    guestLastName,
-    email,
-    phone,
-    status: 'confirmed',
-    price: room.rackRateUSD * nights,
-    referer: 'BokoBoko Admin',
-    info: notes ? `${reference} — ${notes}` : reference,
-  });
+  try {
+    const beds24Result = await createBooking({
+      roomId,
+      arrival: checkIn,
+      departure: checkOut,
+      numAdult: adults,
+      numChild: children,
+      guestFirstName,
+      guestLastName,
+      email,
+      phone,
+      status: 'confirmed',
+      price: room.rackRateUSD * nights,
+      referer: 'BokoBoko Admin',
+      info: notes ? `${reference} — ${notes}` : reference,
+    });
 
-  await createIntent({
-    reference,
-    status: 'CONFIRMED',
-    beds24_booking_id: beds24Result.id,
-    room_id: roomId,
-    check_in: checkIn,
-    check_out: checkOut,
-    adults,
-    children,
-    guest_name: `${guestFirstName} ${guestLastName}`,
-    guest_email: email,
-    guest_phone: phone ?? null,
-    amount_pesewas: amountPesewas,
-    currency: 'GHS',
-    paystack_status: 'manual',
-    expires_at: null,
-    beds24_raw: beds24Result,
-    paystack_raw: { source: 'admin_manual' },
-  });
+    await createIntent({
+      reference,
+      status: 'CONFIRMED',
+      beds24_booking_id: beds24Result.id,
+      room_id: roomId,
+      check_in: checkIn,
+      check_out: checkOut,
+      adults,
+      children,
+      guest_name: `${guestFirstName} ${guestLastName}`,
+      guest_email: email,
+      guest_phone: phone ?? null,
+      amount_pesewas: amountPesewas,
+      currency: 'GHS',
+      paystack_status: 'manual',
+      expires_at: null,
+      beds24_raw: beds24Result,
+      paystack_raw: { source: 'admin_manual' },
+    });
 
-  invalidate('bookings:');
-  invalidate('analytics:');
-  return NextResponse.json({ reference, beds24Id: beds24Result.id });
+    invalidate('bookings:');
+    invalidate('analytics:');
+    return NextResponse.json({ reference, beds24Id: beds24Result.id });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to create booking';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

@@ -11,8 +11,8 @@ interface AdminBooking {
   departure: string;
   numAdult: number;
   numChild: number;
-  guestFirstName: string;
-  guestLastName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone?: string;
   status: string;
@@ -109,8 +109,8 @@ export default function AdminDashboard() {
   function exportCSV() {
     const rows = visible.map((b) => ({
       'Beds24 ID': b.id ?? '',
-      'First Name': b.guestFirstName,
-      'Last Name': b.guestLastName,
+      'First Name': b.firstName,
+      'Last Name': b.lastName,
       'Email': b.email,
       'Phone': b.phone ?? '',
       'Room': ROOM_NAMES[b.roomId] ?? `Room ${b.roomId}`,
@@ -240,7 +240,7 @@ export default function AdminDashboard() {
                     return (
                       <tr key={b.id ?? i} onClick={() => setDetailBooking(b)} className={`cursor-pointer hover:bg-gray-50 ${isArriving ? 'bg-green-50/40' : isDeparting ? 'bg-orange-50/40' : ''}`}>
                         <td className="px-4 py-3">
-                          <p className="font-medium text-gray-800">{b.guestFirstName} {b.guestLastName}</p>
+                          <p className="font-medium text-gray-800">{b.firstName} {b.lastName}</p>
                           <p className="text-xs text-gray-400">{b.email}</p>
                           {b.phone && <p className="text-xs text-gray-400">{b.phone}</p>}
                         </td>
@@ -334,7 +334,7 @@ export default function AdminDashboard() {
             {/* Modal header */}
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <div className="flex items-center gap-2">
-                <h2 className="font-bold text-gray-800 text-lg">{b.guestFirstName} {b.guestLastName}</h2>
+                <h2 className="font-bold text-gray-800 text-lg">{b.firstName} {b.lastName}</h2>
                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${ch.className}`}>{ch.label}</span>
               </div>
               <button onClick={() => setDetailBooking(null)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>

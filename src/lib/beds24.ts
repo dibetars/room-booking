@@ -182,10 +182,13 @@ export async function getBookings(params: {
 export interface Beds24Message {
   id: number;
   bookingId: number;
+  roomId?: number;
+  propertyId?: number;
   time: string;
+  read?: boolean;
   message: string;
-  type: 'guest' | 'owner' | 'system' | 'internal';
-  from?: string;
+  source: 'guest' | 'host';
+  authorOwnerId?: number | null;
 }
 
 export async function getMessages(params: {
@@ -198,7 +201,7 @@ export async function getMessages(params: {
   if (params.startDate) query.set('startDate', params.startDate);
   if (params.endDate) query.set('endDate', params.endDate);
 
-  const res = await beds24Fetch(`/messages?${query}`);
+  const res = await beds24Fetch(`/bookings/messages?${query}`);
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`Beds24 getMessages failed: ${res.status} ${body}`);
@@ -208,9 +211,9 @@ export async function getMessages(params: {
 }
 
 export async function sendMessage(bookingId: number, message: string): Promise<void> {
-  const res = await beds24Fetch('/messages', {
+  const res = await beds24Fetch('/bookings/messages', {
     method: 'POST',
-    body: JSON.stringify([{ bookingId, message, type: 'owner' }]),
+    body: JSON.stringify([{ bookingId, message, source: 'host' }]),
   });
   if (!res.ok) {
     const body = await res.text();
