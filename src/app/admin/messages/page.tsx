@@ -11,6 +11,7 @@ interface Booking {
   lastName: string;
   email: string;
   status: string;
+  channel?: string;
   referer?: string;
 }
 
