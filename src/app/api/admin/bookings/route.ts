@@ -30,7 +30,10 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json({ bookings });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to load bookings';
+    const message = err instanceof Error
+      ? err.message
+      : (typeof err === 'object' ? JSON.stringify(err) : String(err));
+    console.error('[bookings GET]', err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
