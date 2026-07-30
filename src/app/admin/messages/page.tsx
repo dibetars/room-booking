@@ -15,6 +15,16 @@ interface Booking {
   referer?: string;
 }
 
+const ROOM_NAMES: Record<number, string> = {
+  691857: 'Patience',
+  691859: 'Regeneration',
+  691860: 'Humility',
+  691861: 'Wisdom',
+  691862: 'Truth & Honesty',
+  691863: 'Love',
+  691864: 'Generosity',
+};
+
 interface Message {
   id: number;
   bookingId: number;
@@ -170,7 +180,7 @@ export default function MessagesPage() {
                 </span>
               </div>
               <div className="mt-0.5 text-[11px] text-gray-400">
-                Room {b.roomId} · {b.arrival ? new Date(b.arrival).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''} → {b.departure ? new Date(b.departure).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''}
+                {ROOM_NAMES[b.roomId] ?? `Room ${b.roomId}`} · {b.arrival ? new Date(b.arrival).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''} → {b.departure ? new Date(b.departure).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''}
               </div>
             </button>
           );
@@ -186,7 +196,7 @@ export default function MessagesPage() {
               {`${selected.firstName} ${selected.lastName}`.trim()}
             </p>
             <p className="text-xs text-gray-400">
-              Booking #{selected.id} · Room {selected.roomId}
+              Booking #{selected.id} · {ROOM_NAMES[selected.roomId] ?? `Room ${selected.roomId}`}
               {selected.arrival ? ` · Check-in ${new Date(selected.arrival).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
             </p>
           </div>

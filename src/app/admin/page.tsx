@@ -39,24 +39,27 @@ const PAYMENT_COLORS: Record<string, string> = {
 };
 
 const CHANNEL_BADGES: Record<string, { label: string; className: string }> = {
-  'booking.com':    { label: 'Booking.com',   className: 'bg-blue-100 text-blue-700' },
-  'airbnb':         { label: 'Airbnb',         className: 'bg-rose-100 text-rose-700' },
-  'hostelworld':    { label: 'Hostelworld',    className: 'bg-purple-100 text-purple-700' },
-  'expedia':        { label: 'Expedia',        className: 'bg-yellow-100 text-yellow-800' },
-  'bokoboko admin': { label: 'Admin',          className: 'bg-gray-100 text-gray-600' },
+  'booking.com':     { label: 'Booking.com',  className: 'bg-blue-100 text-blue-700' },
+  'airbnb':          { label: 'Airbnb',        className: 'bg-rose-100 text-rose-700' },
+  'hostelworld':     { label: 'Hostelworld',   className: 'bg-purple-100 text-purple-700' },
+  'expedia':         { label: 'Expedia',       className: 'bg-yellow-100 text-yellow-800' },
+  'bokoboko admin':  { label: 'Admin',         className: 'bg-gray-100 text-gray-600' },
+  'bokoboko direct': { label: 'Website',       className: 'bg-green-100 text-green-700' },
 };
 
 function channelBadge(referer?: string) {
-  if (!referer) return { label: 'Direct', className: 'bg-green-100 text-green-700' };
+  if (!referer) return { label: 'API', className: 'bg-gray-100 text-gray-500' };
   return CHANNEL_BADGES[referer.toLowerCase()] ?? { label: referer, className: 'bg-gray-100 text-gray-600' };
 }
 
 const ROOM_NAMES: Record<number, string> = {
-  2634263: 'Bungalow 1',
-  2509568: 'Bungalow 2',
-  2634338: 'Bungalow 3a',
-  2634343: 'Bungalow 3b',
-  2509563: 'Family Suite',
+  691857: 'Patience',
+  691859: 'Regeneration',
+  691860: 'Humility',
+  691861: 'Wisdom',
+  691862: 'Truth & Honesty',
+  691863: 'Love',
+  691864: 'Generosity',
 };
 
 function fmt(d: string) {
