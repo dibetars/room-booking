@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getBookings, createBooking } from '@/lib/beds24';
-import { getIntentsByBeds24Ids, createIntent } from '@/lib/supabase';
+import { getIntentsByBeds24Ids, createIntent, getSetting } from '@/lib/supabase';
 import { generateReference } from '@/lib/booking-ref';
 import { ROOMS } from '@/lib/rooms';
 import { withCache, invalidate } from '@/lib/server-cache';
+import { getDiscount, applyDiscount } from '@/lib/discounts';
 
 const BOOKINGS_TTL = 2 * 60 * 1000; // 2 minutes
 
@@ -68,8 +69,12 @@ export async function POST(req: NextRequest) {
 
   const nights = Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000);
   const GHS_PER_USD = Number(process.env.GHS_PER_USD ?? '15.5');
-  const finalPriceGHS = priceGHS ?? room.rackRateUSD * nights * GHS_PER_USD;
+  const augustWeekendEnabled = await getSetting<boolean>('august_weekend_discount', true);
+  const discount = getDiscount(checkIn, checkOut, { augustWeekendEnabled });
+  const autoRateUSD = applyDiscount(room.rackRateUSD * nights, discount);
+  const finalPriceGHS = priceGHS ?? autoRateUSD * GHS_PER_USD;
   const amountPesewas = Math.round(finalPriceGHS * 100);
+  const discountInfo = discount ? ` [${discount.code} -${discount.discountPct}%]` : '';
   const reference = generateReference();
 
   try {
@@ -84,9 +89,9 @@ export async function POST(req: NextRequest) {
       email,
       phone,
       status: 'confirmed',
-      price: room.rackRateUSD * nights,
+      price: autoRateUSD,
       referer: 'BokoBoko Admin',
-      info: notes ? `${reference} — ${notes}` : reference,
+      info: notes ? `${reference} — ${notes}${discountInfo}` : `${reference}${discountInfo}`,
     });
 
     await createIntent({
@@ -111,7 +116,7 @@ export async function POST(req: NextRequest) {
 
     invalidate('bookings:');
     invalidate('analytics:');
-    return NextResponse.json({ reference, beds24Id: beds24Result.id });
+    return NextResponse.json({ reference, beds24Id: beds24Result.id, discount: discount ?? undefined });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to create booking';
     return NextResponse.json({ error: message }, { status: 500 });

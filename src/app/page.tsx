@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Script from 'next/script';
 import { ROOMS } from '@/lib/rooms';
+import { getDiscount } from '@/lib/discounts';
 
 
 const GHS_PER_USD = Number(process.env.NEXT_PUBLIC_GHS_PER_USD ?? '15.5');
@@ -60,6 +61,7 @@ export default function HomePage() {
   const [bookingError, setBookingError] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState<{ reference: string } | null>(null);
   const [paymentsEnabled, setPaymentsEnabled] = useState(true);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 50);
@@ -167,13 +169,43 @@ export default function HomePage() {
 
   const nights = Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000);
   const fmt = (d: string) => new Date(d).toLocaleDateString('en-GH', { weekday: 'short', month: 'short', day: 'numeric' });
+  const activeDiscount = selectedRoom ? getDiscount(checkIn, checkOut) : null;
+  const discountedTotal = selectedRoom
+    ? activeDiscount
+      ? Math.round(selectedRoom.rackRateUSD * nights * (1 - activeDiscount.discountPct / 100) * 100) / 100
+      : selectedRoom.rackRateUSD * nights
+    : 0;
 
   return (
     <div className="font-sans text-[#333]">
       <Script src="https://js.paystack.co/v1/inline.js" strategy="beforeInteractive" />
 
+      {/* August Weekend Promo Banner */}
+      {!bannerDismissed && (
+        <div className="fixed top-0 left-0 w-full z-[60] bg-[#BE6A45] text-white text-sm font-medium px-4 py-2.5 flex items-center justify-center gap-3 shadow-md">
+          <span className="text-base">🏷</span>
+          <span>
+            Book your <strong>weekend experience for all of August</strong> and get{' '}
+            <strong>15% off</strong> your stay.
+          </span>
+          <button
+            onClick={() => setShowSearchModal(true)}
+            className="ml-2 bg-white text-[#BE6A45] font-bold px-3 py-1 rounded-full text-xs hover:bg-gray-100 transition-colors shrink-0"
+          >
+            Book Now
+          </button>
+          <button
+            onClick={() => setBannerDismissed(true)}
+            className="ml-1 text-white/70 hover:text-white text-lg leading-none shrink-0"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Navbar */}
-      <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 shadow-md h-20' : 'bg-transparent h-24'}`}>
+      <nav className={`fixed left-0 w-full z-50 transition-all duration-300 ${bannerDismissed ? 'top-0' : 'top-[44px]'} ${scrolled ? 'bg-white/95 shadow-md h-20' : 'bg-transparent h-24'}`}>
         <div className="max-w-6xl mx-auto px-5 h-full flex items-center justify-between">
           <a href="/" className="h-14 flex items-center">
             <Image src="/images/Boko-Logo.png" alt="BokoBoko" width={120} height={56}
@@ -228,6 +260,9 @@ export default function HomePage() {
               <input type="date" value={checkIn} min={todayStr()} required
                 onChange={e => setCheckIn(e.target.value)}
                 className="w-full text-gray-800 font-medium text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#BE6A45]" />
+              {getDiscount(checkIn, checkOut) && (
+                <p className="text-[10px] text-amber-600 font-semibold mt-1">🏷 15% Aug weekend discount applies!</p>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Check-out</label>
@@ -408,8 +443,22 @@ export default function HomePage() {
                     <p className="text-sm text-gray-500">{fmt(checkIn)} → {fmt(checkOut)} · {nights} night{nights !== 1 ? 's' : ''}</p>
                     <div className="flex justify-between items-baseline mt-2">
                       <span className="text-sm text-gray-500">${selectedRoom.rackRateUSD} × {nights} night{nights !== 1 ? 's' : ''}</span>
-                      <span className="font-bold text-[#BE6A45]">${selectedRoom.rackRateUSD * nights}</span>
+                      <span className={activeDiscount ? 'text-sm text-gray-400 line-through' : 'font-bold text-[#BE6A45]'}>
+                        ${selectedRoom.rackRateUSD * nights}
+                      </span>
                     </div>
+                    {activeDiscount && (
+                      <>
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-sm text-amber-700 font-semibold">🏷 {activeDiscount.label}</span>
+                          <span className="text-sm text-amber-700 font-semibold">−${(selectedRoom.rackRateUSD * nights - discountedTotal).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-baseline pt-1 border-t border-[#e8dfd0]">
+                          <span className="text-sm font-semibold text-gray-700">Total</span>
+                          <span className="font-bold text-[#BE6A45] text-lg">${discountedTotal}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Guest form */}
@@ -453,7 +502,7 @@ export default function HomePage() {
                     <button type="submit" disabled={submitting}
                       className="w-full bg-[#BE6A45] hover:bg-[#a85a38] text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-60">
                       {paymentsEnabled
-                        ? (submitting ? 'Opening payment…' : `Pay $${selectedRoom.rackRateUSD * nights}`)
+                        ? (submitting ? 'Opening payment…' : `Pay $${discountedTotal}`)
                         : (submitting ? 'Sending request…' : 'Request to Book')}
                     </button>
                     {paymentsEnabled && <p className="text-xs text-gray-400 text-center">Secure payment powered by Paystack.</p>}

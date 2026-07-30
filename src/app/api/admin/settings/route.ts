@@ -5,12 +5,16 @@ import { getSetting, setSetting } from '@/lib/supabase';
 // Protected by admin middleware (matcher: /api/admin/:path*).
 
 export async function GET() {
-  const paymentsEnabled = await getSetting<boolean>('payments_enabled', false);
-  return NextResponse.json({ paymentsEnabled });
+  const [paymentsEnabled, augustWeekendDiscount] = await Promise.all([
+    getSetting<boolean>('payments_enabled', false),
+    getSetting<boolean>('august_weekend_discount', true),
+  ]);
+  return NextResponse.json({ paymentsEnabled, augustWeekendDiscount });
 }
 
 const schema = z.object({
-  paymentsEnabled: z.boolean(),
+  paymentsEnabled: z.boolean().optional(),
+  augustWeekendDiscount: z.boolean().optional(),
 });
 
 export async function PUT(req: NextRequest) {
@@ -21,8 +25,15 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
-    await setSetting('payments_enabled', parsed.data.paymentsEnabled);
-    return NextResponse.json({ ok: true, paymentsEnabled: parsed.data.paymentsEnabled });
+    const updates: Promise<void>[] = [];
+    if (parsed.data.paymentsEnabled !== undefined) {
+      updates.push(setSetting('payments_enabled', parsed.data.paymentsEnabled));
+    }
+    if (parsed.data.augustWeekendDiscount !== undefined) {
+      updates.push(setSetting('august_weekend_discount', parsed.data.augustWeekendDiscount));
+    }
+    await Promise.all(updates);
+    return NextResponse.json({ ok: true, ...parsed.data });
   } catch (err) {
     console.error('[admin settings PUT]', err);
     return NextResponse.json({ error: 'Save failed — ensure the app_settings table exists in Supabase.' }, { status: 500 });

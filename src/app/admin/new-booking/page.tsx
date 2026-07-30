@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ROOMS } from '@/lib/rooms';
+import { getDiscount, applyDiscount } from '@/lib/discounts';
 
 function todayStr() { return new Date().toISOString().slice(0, 10); }
 function tomorrowStr() {
@@ -36,7 +37,9 @@ export default function NewBookingPage() {
     (new Date(form.checkOut).getTime() - new Date(form.checkIn).getTime()) / 86400000
   ));
   const GHS_PER_USD = Number(process.env.NEXT_PUBLIC_GHS_PER_USD ?? '15.5');
-  const autoPrice = (room.rackRateUSD * nights).toFixed(2);
+  const rackTotal = room.rackRateUSD * nights;
+  const discount = getDiscount(form.checkIn, form.checkOut);
+  const autoPrice = applyDiscount(rackTotal, discount).toFixed(2);
 
   function set(field: string, value: string | number) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -106,6 +109,7 @@ export default function NewBookingPage() {
                 <label className={LABEL}>Check-in</label>
                 <input type="date" value={form.checkIn} min={todayStr()} required
                   onChange={(e) => set('checkIn', e.target.value)} className={INPUT} />
+                <p className="text-[10px] text-amber-600 mt-1 font-medium">Fri/Sat in Aug = 15% off</p>
               </div>
               <div>
                 <label className={LABEL}>Check-out</label>
@@ -170,11 +174,26 @@ export default function NewBookingPage() {
               <span className="text-white/70 text-sm">{nights} night{nights !== 1 ? 's' : ''}</span>
               <span className="text-sm font-medium">× {nights}</span>
             </div>
+            {discount && (
+              <div className="flex items-center justify-between">
+                <span className="text-amber-300 text-xs font-semibold">🏷 {discount.label}</span>
+                <span className="text-amber-300 text-sm font-semibold">−${(rackTotal - Number(autoPrice)).toFixed(2)}</span>
+              </div>
+            )}
             <div className="border-t border-white/15 pt-3 flex items-center justify-between">
               <span className="text-white/70 text-sm">Total</span>
-              <span className="text-xl font-bold text-[#BE6A45]">${autoPrice}</span>
+              <div className="text-right">
+                {discount && <p className="text-white/40 text-xs line-through">${rackTotal.toFixed(2)}</p>}
+                <span className="text-xl font-bold text-[#BE6A45]">${autoPrice}</span>
+              </div>
             </div>
           </div>
+          {discount && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
+              <span className="text-base mt-0.5">🏷</span>
+              <span><strong>August Weekend discount applied.</strong> Check-in is a Friday or Saturday in August 2026 — 15% off the rack rate. Price override below will bypass this.</span>
+            </div>
+          )}
 
           {/* Pricing & notes */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">

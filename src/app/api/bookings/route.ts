@@ -5,6 +5,7 @@ import { createIntent, getIntentByRef, getSetting } from '@/lib/supabase';
 import { generateReference } from '@/lib/booking-ref';
 import { ROOMS } from '@/lib/rooms';
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
+import { getDiscount, applyDiscount } from '@/lib/discounts';
 
 const schema = z.object({
   roomId: z.number().int().positive(),
@@ -63,21 +64,27 @@ export async function POST(req: NextRequest) {
   setTimeout(() => recentRequests.delete(dedupeKey), 5 * 60 * 1000);
 
   try {
-    // Authoritative price from room config (Beds24 rackRate × nights × exchange rate)
     const nights = Math.round(
       (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000
     );
     const GHS_PER_USD = Number(process.env.GHS_PER_USD ?? '15.5');
-    const priceGHS = room.rackRateUSD * nights * GHS_PER_USD;
-    const amountPesewas = Math.round(priceGHS * 100);
 
     const reference = generateReference();
+    const [paymentsEnabled, augustWeekendEnabled] = await Promise.all([
+      getSetting<boolean>('payments_enabled', false),
+      getSetting<boolean>('august_weekend_discount', true),
+    ]);
 
-    // Manual mode (Paystack disabled): create the booking directly as a real
-    // reservation the property follows up on to collect payment offline.
-    const paymentsEnabled = await getSetting<boolean>('payments_enabled', false);
+    const discount = getDiscount(checkIn, checkOut, { augustWeekendEnabled });
+    const priceUSD = applyDiscount(room.rackRateUSD * nights, discount);
+    const priceGHS = priceUSD * GHS_PER_USD;
+    const amountPesewas = Math.round(priceGHS * 100);
 
-    const [firstName, ...rest] = guest.name.split(' ');
+    // Split full name; fall back to '-' for last name if single-word entry
+    const [firstName, ...rest] = guest.name.trim().split(/\s+/);
+    const lastName = rest.join(' ') || '-';
+
+    const discountInfo = discount ? ` [${discount.code} -${discount.discountPct}%]` : '';
 
     if (!paymentsEnabled) {
       const beds24Result = await createBooking({
@@ -87,18 +94,18 @@ export async function POST(req: NextRequest) {
         numAdult: adults,
         numChild: children,
         guestFirstName: firstName,
-        guestLastName: rest.join(' ') || firstName,
+        guestLastName: lastName,
         email: guest.email,
         phone: guest.phone,
-        status: 'new', // real booking, blocks dates, shown in admin to confirm
-        price: room.rackRateUSD * nights,
+        status: 'new',
+        price: priceUSD,
         referer: 'BokoBoko Direct',
-        info: `Ref: ${reference} — manual payment (Paystack disabled)`,
+        info: `Ref: ${reference} — manual payment (Paystack disabled)${discountInfo}`,
       });
 
       await createIntent({
         reference,
-        status: 'PAYMENT_PENDING', // payment arranged offline; expires_at=null keeps cron away
+        status: 'PAYMENT_PENDING',
         beds24_booking_id: beds24Result.id,
         room_id: roomId,
         check_in: checkIn,
@@ -116,12 +123,11 @@ export async function POST(req: NextRequest) {
         paystack_raw: { source: 'manual_mode' },
       });
 
-      return NextResponse.json({ reference, manual: true });
+      return NextResponse.json({ reference, manual: true, discount: discount ?? undefined });
     }
 
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
-    // 1. Create hold in Beds24 (status=request blocks OTA availability)
     const beds24Result = await createBooking({
       roomId,
       arrival: checkIn,
@@ -129,16 +135,15 @@ export async function POST(req: NextRequest) {
       numAdult: adults,
       numChild: children,
       guestFirstName: firstName,
-      guestLastName: rest.join(' ') || firstName,
+      guestLastName: lastName,
       email: guest.email,
       phone: guest.phone,
       status: 'request',
-      price: room.rackRateUSD * nights,
+      price: priceUSD,
       referer: 'BokoBoko Direct',
-      info: `Ref: ${reference}`,
+      info: `Ref: ${reference}${discountInfo}`,
     });
 
-    // 2. Persist the intent in Supabase
     await createIntent({
       reference,
       status: 'HELD',
@@ -159,7 +164,7 @@ export async function POST(req: NextRequest) {
       paystack_raw: null,
     });
 
-    return NextResponse.json({ reference, amountPesewas, expiresAt });
+    return NextResponse.json({ reference, amountPesewas, expiresAt, discount: discount ?? undefined });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : JSON.stringify(err);
     console.error('[POST /api/bookings]', { ip, message, err });
