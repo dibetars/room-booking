@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
         convMap.set(bId, {
           bookingId: bId,
           guestName: booking
-            ? `${booking.guestFirstName} ${booking.guestLastName}`.trim()
+            ? `${booking.firstName} ${booking.lastName}`.trim()
             : `Booking #${bId}`,
           room: booking ? String(booking.roomId) : '',
           arrival: booking?.arrival ?? '',

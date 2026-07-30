@@ -79,8 +79,8 @@ export interface Beds24Booking {
   departure: string;
   numAdult: number;
   numChild: number;
-  guestFirstName: string;
-  guestLastName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone?: string;
   status: 'confirmed' | 'request' | 'new' | 'cancelled';

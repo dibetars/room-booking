@@ -61,7 +61,11 @@ export default function HomePage() {
   const [bookingError, setBookingError] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState<{ reference: string } | null>(null);
   const [paymentsEnabled, setPaymentsEnabled] = useState(true);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(true); // start hidden, show after delay
+  useEffect(() => {
+    const t = setTimeout(() => setBannerDismissed(false), 2500);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 50);
@@ -180,32 +184,54 @@ export default function HomePage() {
     <div className="font-sans text-[#333]">
       <Script src="https://js.paystack.co/v1/inline.js" strategy="beforeInteractive" />
 
-      {/* August Weekend Promo Banner */}
+      {/* August Weekend Promo Popup */}
       {!bannerDismissed && (
-        <div className="fixed top-0 left-0 w-full z-[60] bg-[#BE6A45] text-white text-sm font-medium px-4 py-2.5 flex items-center justify-center gap-3 shadow-md">
-          <span className="text-base">🏷</span>
-          <span>
-            Book your <strong>weekend experience for all of August</strong> and get{' '}
-            <strong>15% off</strong> your stay.
-          </span>
-          <button
-            onClick={() => setShowSearchModal(true)}
-            className="ml-2 bg-white text-[#BE6A45] font-bold px-3 py-1 rounded-full text-xs hover:bg-gray-100 transition-colors shrink-0"
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4" onClick={() => setBannerDismissed(true)}>
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
           >
-            Book Now
-          </button>
-          <button
-            onClick={() => setBannerDismissed(true)}
-            className="ml-1 text-white/70 hover:text-white text-lg leading-none shrink-0"
-            aria-label="Dismiss"
-          >
-            ×
-          </button>
+            <div className="bg-[#BE6A45] px-6 py-5 text-white relative">
+              <button
+                onClick={() => setBannerDismissed(true)}
+                className="absolute top-3 right-4 text-white/70 hover:text-white text-2xl leading-none"
+                aria-label="Dismiss"
+              >×</button>
+              <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-1">Limited Time Offer</p>
+              <h2 className="text-2xl font-bold leading-snug">
+                15% off your August weekend stay
+              </h2>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Book any <strong>Friday or Saturday check-in during August 2026</strong> and enjoy 15% off the rack rate — automatically applied at checkout.
+              </p>
+              <div className="bg-[#f5f0e8] rounded-xl p-4 text-sm text-gray-700 space-y-1">
+                <p>✓ Applies to all rooms</p>
+                <p>✓ No promo code needed — discount auto-applies</p>
+                <p>✓ Valid for stays fully within August 2026</p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setBannerDismissed(true); setShowSearchModal(true); }}
+                  className="flex-1 bg-[#BE6A45] hover:bg-[#a85a38] text-white font-bold py-3 rounded-xl transition-colors"
+                >
+                  Book Now
+                </button>
+                <button
+                  onClick={() => setBannerDismissed(true)}
+                  className="px-5 py-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition-colors text-sm"
+                >
+                  Maybe later
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Navbar */}
-      <nav className={`fixed left-0 w-full z-50 transition-all duration-300 ${bannerDismissed ? 'top-0' : 'top-[44px]'} ${scrolled ? 'bg-white/95 shadow-md h-20' : 'bg-transparent h-24'}`}>
+      <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 shadow-md h-20' : 'bg-transparent h-24'}`}>
         <div className="max-w-6xl mx-auto px-5 h-full flex items-center justify-between">
           <a href="/" className="h-14 flex items-center">
             <Image src="/images/Boko-Logo.png" alt="BokoBoko" width={120} height={56}
@@ -260,9 +286,6 @@ export default function HomePage() {
               <input type="date" value={checkIn} min={todayStr()} required
                 onChange={e => setCheckIn(e.target.value)}
                 className="w-full text-gray-800 font-medium text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#BE6A45]" />
-              {getDiscount(checkIn, checkOut) && (
-                <p className="text-[10px] text-amber-600 font-semibold mt-1">🏷 15% Aug weekend discount applies!</p>
-              )}
             </div>
             <div className="flex-1 min-w-0">
               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Check-out</label>
@@ -291,6 +314,13 @@ export default function HomePage() {
               {searching ? 'Searching…' : 'Search Rooms'}
             </button>
           </form>
+          {getDiscount(checkIn, checkOut) && (
+            <div className="mt-3 flex justify-center">
+              <span className="inline-flex items-center gap-1.5 bg-amber-500/90 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow">
+                🏷 August Weekend — 15% discount will be applied at checkout
+              </span>
+            </div>
+          )}
         </div>
       </section>
 

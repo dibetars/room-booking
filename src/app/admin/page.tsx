@@ -257,8 +257,8 @@ export default function AdminDashboard() {
                             {isDeparting && <span className="ml-1 text-orange-600 font-medium">· Departing today</span>}
                           </p>
                         </td>
-                        <td className="px-4 py-3 text-gray-700">
-                          {b.numAdult}A {b.numChild > 0 ? `${b.numChild}C` : ''}
+                        <td className="px-4 py-3 text-gray-700 text-sm whitespace-nowrap">
+                          {b.numAdult} Adult{b.numAdult !== 1 ? 's' : ''}{b.numChild > 0 ? `, ${b.numChild} Child${b.numChild !== 1 ? 'ren' : ''}` : ''}
                         </td>
                         <td className="px-4 py-3">
                           {(() => { const ch = channelBadge(b.referer); return (

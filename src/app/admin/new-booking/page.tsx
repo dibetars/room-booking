@@ -148,8 +148,8 @@ export default function NewBookingPage() {
                   onChange={(e) => set('guestLastName', e.target.value)} className={INPUT} />
               </div>
               <div>
-                <label className={LABEL}>Email</label>
-                <input type="email" value={form.email} required
+                <label className={LABEL}>Email <span className="text-gray-300 font-normal normal-case">(optional)</span></label>
+                <input type="email" value={form.email}
                   onChange={(e) => set('email', e.target.value)} className={INPUT} />
               </div>
               <div>
