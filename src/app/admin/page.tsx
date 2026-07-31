@@ -47,9 +47,20 @@ const CHANNEL_BADGES: Record<string, { label: string; className: string }> = {
   'bokoboko direct': { label: 'Website',       className: 'bg-green-100 text-green-700' },
 };
 
-function channelBadge(referer?: string) {
-  if (!referer) return { label: 'API', className: 'bg-gray-100 text-gray-500' };
-  return CHANNEL_BADGES[referer.toLowerCase()] ?? { label: referer, className: 'bg-gray-100 text-gray-600' };
+function channelBadge(b: AdminBooking) {
+  // OTA bookings: Beds24 returns a channel field automatically
+  const ch = (b as unknown as { channel?: string }).channel;
+  if (ch && CHANNEL_BADGES[ch.toLowerCase()]) return CHANNEL_BADGES[ch.toLowerCase()];
+
+  // Our own bookings: Beds24 doesn't echo back the referer on GET,
+  // so we fall back to the intent's paystack_raw.source we stored at creation.
+  if (b.intent) {
+    const src = (b.intent.paystack_raw as { source?: string } | null)?.source;
+    if (src === 'admin_manual') return { label: 'Admin', className: 'bg-gray-100 text-gray-600' };
+    return { label: 'Website', className: 'bg-green-100 text-green-700' };
+  }
+
+  return { label: 'API', className: 'bg-gray-100 text-gray-500' };
 }
 
 const ROOM_NAMES: Record<number, string> = {
@@ -122,7 +133,7 @@ export default function AdminDashboard() {
       'Nights': nights(b.arrival, b.departure),
       'Adults': b.numAdult,
       'Children': b.numChild,
-      'Channel': channelBadge(b.referer).label,
+      'Channel': channelBadge(b).label,
       'Beds24 Status': b.status,
       'Payment Status': b.intent?.status ?? '',
       'Reference': b.intent?.reference ?? '',
@@ -261,7 +272,7 @@ export default function AdminDashboard() {
                           {b.numAdult} Adult{b.numAdult !== 1 ? 's' : ''}{b.numChild > 0 ? `, ${b.numChild} Child${b.numChild !== 1 ? 'ren' : ''}` : ''}
                         </td>
                         <td className="px-4 py-3">
-                          {(() => { const ch = channelBadge(b.referer); return (
+                          {(() => { const ch = channelBadge(b); return (
                             <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${ch.className}`}>
                               {ch.label}
                             </span>
@@ -329,7 +340,7 @@ export default function AdminDashboard() {
 
     {detailBooking && (() => {
       const b = detailBooking;
-      const ch = channelBadge(b.referer);
+      const ch = channelBadge(b);
       const n = nights(b.arrival, b.departure);
       return (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setDetailBooking(null)}>
