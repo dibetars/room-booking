@@ -720,7 +720,7 @@ export default function HomePage() {
           {/* Right: Map */}
           <div className="rounded-2xl overflow-hidden h-72 md:h-80 shadow-lg">
             <iframe
-              src="https://www.openstreetmap.org/export/embed.html?bbox=-2.0058%2C4.7306%2C-1.9658%2C4.7706&layer=mapnik&marker=4.7506%2C-1.9858"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=-1.9589%2C4.7867%2C-1.9189%2C4.8267&layer=mapnik&marker=4.8067%2C-1.9389"
               width="100%"
               height="100%"
               style={{ border: 0 }}
