@@ -720,12 +720,13 @@ export default function HomePage() {
           {/* Right: Map */}
           <div className="rounded-2xl overflow-hidden h-72 md:h-80 shadow-lg">
             <iframe
-              src="https://www.openstreetmap.org/export/embed.html?bbox=-1.9589%2C4.7867%2C-1.9189%2C4.8267&layer=mapnik&marker=4.814959%2C-1.943226"
+              src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&q=Obrobibini+Peace+Complex+Busua+Ghana&zoom=15`}
               width="100%"
               height="100%"
               style={{ border: 0 }}
               allowFullScreen
               loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
               title="BokoBoko Guesthouse location"
             />
           </div>

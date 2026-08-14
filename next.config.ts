@@ -12,7 +12,7 @@ const csp = [
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: https:",
   "connect-src 'self' https://api.paystack.co https://*.paystack.co https://*.calendly.com",
-  "frame-src https://js.paystack.co https://checkout.paystack.com https://*.calendly.com",
+  "frame-src https://js.paystack.co https://checkout.paystack.com https://*.calendly.com https://www.google.com https://maps.google.com",
   "object-src 'none'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
