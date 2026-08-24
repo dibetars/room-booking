@@ -63,8 +63,13 @@ export default function HomePage() {
   const [paymentsEnabled, setPaymentsEnabled] = useState(true);
   const [bannerDismissed, setBannerDismissed] = useState(true); // start hidden, show after delay
   const [promoSlide, setPromoSlide] = useState(0);
+  const [promoSlides, setPromoSlides] = useState<Array<{
+    id: string; enabled: boolean; accentColor: string; badge: string; title: string;
+    body: string; bullets: string[]; ctaLabel: string; ctaHref: string; imageUrl: string; openBooking?: boolean;
+  }>>([]);
   useEffect(() => {
     const t = setTimeout(() => setBannerDismissed(false), 2500);
+    fetch('/api/promo-slides').then(r => r.json()).then(d => setPromoSlides(d.slides ?? [])).catch(() => {});
     return () => clearTimeout(t);
   }, []);
 
@@ -185,72 +190,73 @@ export default function HomePage() {
     <div className="font-sans text-[#333]">
       <Script src="https://js.paystack.co/v1/inline.js" strategy="beforeInteractive" />
 
-      {/* Promo Popup — 2-slide carousel */}
-      {!bannerDismissed && (
+      {/* Promo Popup — dynamic carousel */}
+      {!bannerDismissed && promoSlides.length > 0 && (
         <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4" onClick={() => setBannerDismissed(true)}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
-
-            {/* Slides */}
             <div className="relative overflow-hidden">
               <div className="flex transition-transform duration-300 ease-in-out" style={{ transform: `translateX(-${promoSlide * 100}%)` }}>
-
-                {/* Slide 1 — Discount */}
-                <div className="w-full flex-shrink-0">
-                  <div className="bg-[#BE6A45] px-6 py-5 text-white relative">
-                    <button onClick={() => setBannerDismissed(true)} className="absolute top-3 right-4 text-white/70 hover:text-white text-2xl leading-none" aria-label="Dismiss">×</button>
-                    <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-1">Limited Time Offer</p>
-                    <h2 className="text-2xl font-bold leading-snug">15% off your August weekend stay</h2>
-                  </div>
-                  <div className="px-6 py-5 space-y-4">
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      Book any <strong>Friday or Saturday check-in during August 2026</strong> and enjoy 15% off the rack rate — automatically applied at checkout.
-                    </p>
-                    <div className="bg-[#f5f0e8] rounded-xl p-4 text-sm text-gray-700 space-y-1">
-                      <p>✓ Applies to all rooms</p>
-                      <p>✓ No promo code needed — discount auto-applies</p>
-                      <p>✓ Valid for stays fully within August 2026</p>
+                {promoSlides.map((sl) => (
+                  <div key={sl.id} className="w-full flex-shrink-0">
+                    {/* Header — image or solid color */}
+                    <div className="relative" style={{ background: sl.accentColor }}>
+                      {sl.imageUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={sl.imageUrl} alt="" className="w-full h-40 object-cover opacity-60" />
+                      )}
+                      <div className={`${sl.imageUrl ? 'absolute inset-0 flex flex-col justify-end' : ''} px-6 py-5 text-white`}>
+                        <button onClick={() => setBannerDismissed(true)} className="absolute top-3 right-4 text-white/70 hover:text-white text-2xl leading-none" aria-label="Dismiss">×</button>
+                        <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-1">{sl.badge}</p>
+                        <h2 className="text-2xl font-bold leading-snug drop-shadow-sm">{sl.title}</h2>
+                      </div>
                     </div>
-                    <div className="flex gap-3">
-                      <button onClick={() => { setBannerDismissed(true); setShowSearchModal(true); }} className="flex-1 bg-[#BE6A45] hover:bg-[#a85a38] text-white font-bold py-3 rounded-xl transition-colors">Book Now</button>
-                      <button onClick={() => setBannerDismissed(true)} className="px-5 py-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition-colors text-sm">Maybe later</button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Slide 2 — Restaurant */}
-                <div className="w-full flex-shrink-0">
-                  <div className="bg-[#2d5a27] px-6 py-5 text-white relative">
-                    <button onClick={() => setBannerDismissed(true)} className="absolute top-3 right-4 text-white/70 hover:text-white text-2xl leading-none" aria-label="Dismiss">×</button>
-                    <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-1">Now Open</p>
-                    <h2 className="text-2xl font-bold leading-snug">Fresh food, straight from the farm</h2>
-                  </div>
-                  <div className="px-6 py-5 space-y-4">
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                      Our on-site restaurant serves <strong>farm-to-table meals</strong> prepared fresh daily. Guests and visitors are welcome to dine in or order for delivery to your room.
-                    </p>
-                    <div className="bg-[#f0f5f0] rounded-xl p-4 text-sm text-gray-700 space-y-1">
-                      <p>🌿 Locally sourced ingredients</p>
-                      <p>🍽 Breakfast, lunch &amp; dinner</p>
-                      <p>📦 In-room ordering available</p>
-                    </div>
-                    <div className="flex gap-3">
-                      <a href="#restaurant" onClick={() => setBannerDismissed(true)} className="flex-1 bg-[#2d5a27] hover:bg-[#245020] text-white font-bold py-3 rounded-xl transition-colors text-center">View Menu</a>
-                      <button onClick={() => setBannerDismissed(true)} className="px-5 py-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition-colors text-sm">Maybe later</button>
+                    {/* Body */}
+                    <div className="px-6 py-5 space-y-4">
+                      {sl.body && <p className="text-gray-600 text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: sl.body }} />}
+                      {sl.bullets.length > 0 && (
+                        <div className="rounded-xl p-4 text-sm text-gray-700 space-y-1" style={{ background: `${sl.accentColor}12` }}>
+                          {sl.bullets.map((b, i) => <p key={i}>{b}</p>)}
+                        </div>
+                      )}
+                      <div className="flex gap-3">
+                        {sl.openBooking ? (
+                          <button onClick={() => { setBannerDismissed(true); setShowSearchModal(true); }}
+                            className="flex-1 text-white font-bold py-3 rounded-xl transition-colors hover:opacity-90"
+                            style={{ background: sl.accentColor }}>
+                            {sl.ctaLabel}
+                          </button>
+                        ) : (
+                          <a href={sl.ctaHref} onClick={() => setBannerDismissed(true)}
+                            className="flex-1 text-white font-bold py-3 rounded-xl transition-colors hover:opacity-90 text-center"
+                            style={{ background: sl.accentColor }}>
+                            {sl.ctaLabel}
+                          </a>
+                        )}
+                        <button onClick={() => setBannerDismissed(true)} className="px-5 py-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition-colors text-sm">Maybe later</button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
 
             {/* Dots + arrows */}
-            <div className="flex items-center justify-center gap-4 pb-4">
-              <button onClick={() => setPromoSlide(0)} className={`w-2 h-2 rounded-full transition-colors ${promoSlide === 0 ? 'bg-[#BE6A45]' : 'bg-gray-300'}`} aria-label="Slide 1" />
-              <button onClick={() => setPromoSlide(1)} className={`w-2 h-2 rounded-full transition-colors ${promoSlide === 1 ? 'bg-[#2d5a27]' : 'bg-gray-300'}`} aria-label="Slide 2" />
-            </div>
-            <div className="flex justify-between px-6 pb-5">
-              <button onClick={() => setPromoSlide(s => Math.max(0, s - 1))} disabled={promoSlide === 0} className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-0 transition-opacity">← Previous</button>
-              <button onClick={() => setPromoSlide(s => Math.min(1, s + 1))} disabled={promoSlide === 1} className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-0 transition-opacity">Next →</button>
-            </div>
+            {promoSlides.length > 1 && (
+              <>
+                <div className="flex items-center justify-center gap-2 pb-3">
+                  {promoSlides.map((sl, i) => (
+                    <button key={sl.id} onClick={() => setPromoSlide(i)}
+                      className="w-2 h-2 rounded-full transition-all"
+                      style={{ background: promoSlide === i ? sl.accentColor : '#d1d5db', transform: promoSlide === i ? 'scale(1.3)' : 'scale(1)' }}
+                      aria-label={`Slide ${i + 1}`} />
+                  ))}
+                </div>
+                <div className="flex justify-between px-6 pb-5">
+                  <button onClick={() => setPromoSlide(s => Math.max(0, s - 1))} disabled={promoSlide === 0} className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-0 transition-opacity">← Previous</button>
+                  <button onClick={() => setPromoSlide(s => Math.min(promoSlides.length - 1, s + 1))} disabled={promoSlide === promoSlides.length - 1} className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-0 transition-opacity">Next →</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
