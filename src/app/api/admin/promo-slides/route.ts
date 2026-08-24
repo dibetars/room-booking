@@ -80,7 +80,11 @@ export async function PUT(req: NextRequest) {
     await setSetting('promo_slides', parsed.data);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to save slides';
+    const message = err instanceof Error
+      ? err.message
+      : typeof err === 'object' && err !== null && 'message' in err
+        ? String((err as { message: unknown }).message)
+        : JSON.stringify(err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
