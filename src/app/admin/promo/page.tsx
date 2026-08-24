@@ -77,7 +77,14 @@ export default function PromoSlidesPage() {
     const res = await fetch('/api/admin/promo-slides', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slides }),
+      body: JSON.stringify({
+        slides: slides.map(sl => ({
+          ...sl,
+          imageUrl: sl.imageUrl && !sl.imageUrl.startsWith('http') && !sl.imageUrl.startsWith('/')
+            ? `/${sl.imageUrl}`
+            : sl.imageUrl,
+        })),
+      }),
     });
     const data = await res.json();
     setSaving(false);
@@ -205,7 +212,7 @@ export default function PromoSlidesPage() {
                   <input className={INPUT} value={sl.imageUrl} onChange={e => update(sl.id, { imageUrl: e.target.value })} placeholder="/images/restaurant.jpg" />
                   {sl.imageUrl && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={sl.imageUrl} alt="" className="mt-2 h-24 w-full object-cover rounded-lg" />
+                    <img src={sl.imageUrl.startsWith('http') || sl.imageUrl.startsWith('/') ? sl.imageUrl : `/${sl.imageUrl}`} alt="" className="mt-2 h-24 w-full object-cover rounded-lg" />
                   )}
                 </div>
 
