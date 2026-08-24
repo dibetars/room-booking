@@ -269,7 +269,7 @@ export default function HomePage() {
               className={`h-14 w-auto object-contain transition-all ${scrolled ? 'brightness-0' : ''}`} />
           </a>
           <div className="hidden md:flex items-center gap-8">
-            {['About', 'Rooms', 'Amenities', 'Restaurant', 'Contact'].map((s) => {
+            {['About', 'Rooms', 'Amenities', 'Contact'].map((s) => {
               const isActive = activeSection === s.toLowerCase();
               return (
                 <a key={s} href={`#${s.toLowerCase()}`}
@@ -283,6 +283,10 @@ export default function HomePage() {
                 </a>
               );
             })}
+            <a href="https://bokobeach.structine.com/" target="_blank" rel="noopener noreferrer"
+              className={`font-medium transition-colors hover:text-[#BE6A45] ${scrolled ? 'text-[#333]' : 'text-white'}`}>
+              Restaurant
+            </a>
             <button onClick={() => setShowSearchModal(true)} className="bg-black text-white px-5 py-2.5 rounded-full font-semibold hover:bg-[#BE6A45] transition-colors">
               Book Now
             </button>

@@ -26,7 +26,7 @@ export const DEFAULT_SLIDES: PromoSlide[] = [
     body: 'Our on-site restaurant serves farm-to-table meals prepared fresh daily. Guests and visitors are welcome to dine in or order for delivery to your room.',
     bullets: ['🌿 Locally sourced ingredients', '🍽 Breakfast, lunch & dinner', '📦 In-room ordering available'],
     ctaLabel: 'View Menu',
-    ctaHref: '#restaurant',
+    ctaHref: 'https://bokobeach.structine.com/',
     imageUrl: '/images/hero-restaurant.png',
     openBooking: false,
   },
