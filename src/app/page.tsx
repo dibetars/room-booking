@@ -287,6 +287,10 @@ export default function HomePage() {
               className={`font-medium transition-colors hover:text-[#BE6A45] ${scrolled ? 'text-[#333]' : 'text-white'}`}>
               Restaurant
             </a>
+            <a href="https://bokoevents.structine.com/" target="_blank" rel="noopener noreferrer"
+              className={`font-medium transition-colors hover:text-[#BE6A45] ${scrolled ? 'text-[#333]' : 'text-white'}`}>
+              Events &amp; Specials
+            </a>
             <button onClick={() => setShowSearchModal(true)} className="bg-black text-white px-5 py-2.5 rounded-full font-semibold hover:bg-[#BE6A45] transition-colors">
               Book Now
             </button>
