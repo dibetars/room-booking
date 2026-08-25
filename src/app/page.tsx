@@ -42,6 +42,7 @@ const ROOM_CATEGORIES = [
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [checkIn, setCheckIn] = useState(todayStr());
   const [checkOut, setCheckOut] = useState(tomorrowStr());
   const [adults, setAdults] = useState('2');
@@ -287,7 +288,7 @@ export default function HomePage() {
               className={`font-medium transition-colors hover:text-[#BE6A45] ${scrolled ? 'text-[#333]' : 'text-white'}`}>
               Restaurant
             </a>
-            <a href="https://bokoevents.structine.com/" target="_blank" rel="noopener noreferrer"
+            <a href="https://bokoevents.structine.com/events#upcoming" target="_blank" rel="noopener noreferrer"
               className={`font-medium transition-colors hover:text-[#BE6A45] ${scrolled ? 'text-[#333]' : 'text-white'}`}>
               Events &amp; Specials
             </a>
@@ -298,7 +299,47 @@ export default function HomePage() {
               Admin
             </button>
           </div>
+
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden p-2"
+            onClick={() => setMobileMenuOpen(o => !o)}
+            aria-label="Toggle menu"
+          >
+            <svg width="24" height="24" fill="none" stroke={scrolled ? '#333' : 'white'} strokeWidth="2" viewBox="0 0 24 24">
+              {mobileMenuOpen
+                ? <><path d="M18 6 6 18"/><path d="M6 6l12 12"/></>
+                : <><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></>}
+            </svg>
+          </button>
         </div>
+
+        {/* Mobile drawer */}
+        {mobileMenuOpen && (
+          <div className={`md:hidden px-5 pb-5 pt-2 flex flex-col gap-4 ${scrolled ? 'bg-white/95' : 'bg-black/80'}`}>
+            {['About', 'Rooms', 'Amenities', 'Contact'].map(s => (
+              <a key={s} href={`#${s.toLowerCase()}`}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`font-medium text-lg ${scrolled ? 'text-[#333]' : 'text-white'} hover:text-[#BE6A45] transition-colors`}>
+                {s}
+              </a>
+            ))}
+            <a href="https://bokobeach.structine.com/" target="_blank" rel="noopener noreferrer"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`font-medium text-lg ${scrolled ? 'text-[#333]' : 'text-white'} hover:text-[#BE6A45] transition-colors`}>
+              Restaurant
+            </a>
+            <a href="https://bokoevents.structine.com/events#upcoming" target="_blank" rel="noopener noreferrer"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`font-medium text-lg ${scrolled ? 'text-[#333]' : 'text-white'} hover:text-[#BE6A45] transition-colors`}>
+              Events &amp; Specials
+            </a>
+            <button onClick={() => { setMobileMenuOpen(false); setShowSearchModal(true); }}
+              className="bg-black text-white px-5 py-3 rounded-full font-semibold hover:bg-[#BE6A45] transition-colors text-left">
+              Book Now
+            </button>
+          </div>
+        )}
       </nav>
 
       {/* Hero */}
