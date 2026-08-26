@@ -72,7 +72,9 @@ function aggregate(items: string[], revenues: number[]): ReportEntry[] {
 }
 
 export async function generateReport(dateFrom: string, dateTo: string, period: string): Promise<MonthlyReport> {
-  const bookings = await getBookings({ startArrival: dateFrom, endArrival: dateTo });
+  const all = await getBookings({ startArrival: dateFrom, endArrival: dateTo });
+  // Beds24 may ignore date params and return all bookings — filter here to be safe
+  const bookings = all.filter(b => b.arrival >= dateFrom && b.arrival <= dateTo);
 
   const channels: string[] = [];
   const rooms: string[] = [];

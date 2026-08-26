@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { generateTotpSecret, totpUri, verifyTotp } from '@/lib/totp';
 
-export async function GET() {
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  if (url.searchParams.get('status') === '1') {
+    return NextResponse.json({ active: !!process.env.ADMIN_TOTP_SECRET });
+  }
   const secret = generateTotpSecret();
   const uri = totpUri(secret);
   return NextResponse.json({ secret, uri });

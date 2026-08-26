@@ -90,10 +90,17 @@ function TotpSection() {
   const [secret, setSecret] = useState('');
   const [uri, setUri] = useState('');
   const [token, setToken] = useState('');
-  const [state, setState] = useState<'idle' | 'loading' | 'ready' | 'verifying' | 'verified'>('idle');
+  const [state, setState] = useState<'checking' | 'active' | 'idle' | 'loading' | 'ready' | 'verifying' | 'verified'>('checking');
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const hasLoaded = useRef(false);
+
+  useEffect(() => {
+    fetch('/api/admin/totp-setup?status=1')
+      .then(r => r.json())
+      .then(d => setState(d.active ? 'active' : 'idle'))
+      .catch(() => setState('idle'));
+  }, []);
 
   const loadSecret = useCallback(() => {
     setState('loading');
@@ -129,16 +136,32 @@ function TotpSection() {
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-bold text-gray-800">Two-Factor Authentication (TOTP)</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="font-bold text-gray-800">Two-Factor Authentication (TOTP)</h2>
+            {state === 'active' && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Active</span>
+            )}
+          </div>
           <p className="text-sm text-gray-500 mt-1 max-w-md">
             Require a 6-digit code from an authenticator app (Google Authenticator, Authy, 1Password) on every login.
-            Active when <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">ADMIN_TOTP_SECRET</code> is set in your environment.
           </p>
+          {state === 'active' && (
+            <p className="text-xs text-gray-400 mt-1">
+              2FA is active on this account. To re-enroll with a new device, generate a new secret below.
+            </p>
+          )}
         </div>
-        {state === 'idle' && (
-          <button onClick={() => { if (!hasLoaded.current) { hasLoaded.current = true; loadSecret(); } else { setState('ready'); } }}
-            className="shrink-0 text-sm font-semibold text-white bg-[#2d5a27] px-4 py-2 rounded-lg hover:bg-[#245020] transition-colors">
-            Set up 2FA
+        {state === 'checking' && <span className="text-xs text-gray-400 shrink-0">Loading…</span>}
+        {(state === 'idle' || state === 'active') && (
+          <button
+            onClick={() => { if (!hasLoaded.current) { hasLoaded.current = true; loadSecret(); } else { setState('ready'); } }}
+            className={`shrink-0 text-sm font-semibold px-4 py-2 rounded-lg transition-colors ${
+              state === 'active'
+                ? 'text-gray-500 bg-gray-100 hover:bg-gray-200'
+                : 'text-white bg-[#2d5a27] hover:bg-[#245020]'
+            }`}
+          >
+            {state === 'active' ? 'Re-enroll' : 'Set up 2FA'}
           </button>
         )}
       </div>

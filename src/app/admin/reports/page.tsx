@@ -20,12 +20,79 @@ function Bar({ value, max }: { value: number; max: number }) {
   );
 }
 
+function downloadReport(report: MonthlyReport) {
+  const fmtPeriod = (p: string) => new Date(p + '-01').toLocaleDateString('en-GH', { month: 'long', year: 'numeric' });
+  const ghsStr = (n: number) => `GH₵ ${n.toLocaleString('en-GH', { maximumFractionDigits: 0 })}`;
+  const lines: string[] = [
+    `BOKOBOKO BEACH RESORT`,
+    `Monthly Booking Report — ${fmtPeriod(report.period)}`,
+    `Period: ${report.dateFrom} to ${report.dateTo}`,
+    `Generated: ${new Date(report.generatedAt).toLocaleString('en-GH')}`,
+    ``,
+    `═══════════════════════════════════════`,
+    `SUMMARY`,
+    `═══════════════════════════════════════`,
+    `Total Bookings : ${report.totalBookings}`,
+    `  Confirmed    : ${report.confirmedBookings}`,
+    `  Cancelled    : ${report.cancelledBookings}`,
+    `  New/Pending  : ${report.totalBookings - report.confirmedBookings - report.cancelledBookings}`,
+    `Total Revenue  : ${ghsStr(report.totalRevenueGHS)}`,
+    ``,
+    `═══════════════════════════════════════`,
+    `BOOKINGS BY SOURCE`,
+    `═══════════════════════════════════════`,
+    ...report.byChannel.map(c =>
+      `${c.label.padEnd(20)} ${String(c.count).padStart(3)} bookings   ${String(Math.round(c.count / report.totalBookings * 100)).padStart(3)}%   ${ghsStr(c.revenue)}`
+    ),
+    ``,
+    `═══════════════════════════════════════`,
+    `BOOKINGS BY ROOM`,
+    `═══════════════════════════════════════`,
+    ...report.byRoom.map(r =>
+      `${r.label.padEnd(20)} ${String(r.count).padStart(3)} bookings   ${String(Math.round(r.count / report.totalBookings * 100)).padStart(3)}%   ${ghsStr(r.revenue)}`
+    ),
+    ``,
+    `═══════════════════════════════════════`,
+    `STATUS BREAKDOWN`,
+    `═══════════════════════════════════════`,
+    ...report.byStatus.map(s =>
+      `${s.label.charAt(0).toUpperCase() + s.label.slice(1).padEnd(19)} ${String(s.count).padStart(3)}`
+    ),
+    ``,
+    `───────────────────────────────────────`,
+    `BokoBoko Beach Resort · Busua, Ghana`,
+  ];
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bokoboko-report-${report.period}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function ReportView({ report }: { report: MonthlyReport }) {
   const maxChannelCount = Math.max(...report.byChannel.map(c => c.count), 1);
   const maxRoomCount = Math.max(...report.byRoom.map(r => r.count), 1);
+  const fmtPeriod = (p: string) => new Date(p + '-01').toLocaleDateString('en-GH', { month: 'long', year: 'numeric' });
 
   return (
     <div className="space-y-6">
+      {/* Header row with download */}
+      <div className="flex items-center justify-between">
+        <p className="text-base font-semibold text-gray-700">{fmtPeriod(report.period)}</p>
+        <button
+          onClick={() => downloadReport(report)}
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-gray-300 transition-colors"
+        >
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download report
+        </button>
+      </div>
+
       {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
