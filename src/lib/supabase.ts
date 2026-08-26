@@ -114,6 +114,11 @@ export async function setSetting(key: string, value: unknown): Promise<void> {
   if (error) throw error;
 }
 
+export async function deleteSetting(key: string): Promise<void> {
+  const { error } = await getClient().from('app_settings').delete().eq('key', key);
+  if (error) throw error;
+}
+
 export async function listSettingsByPrefix(prefix: string): Promise<{ key: string; value: unknown }[]> {
   const { data } = await getClient()
     .from('app_settings')

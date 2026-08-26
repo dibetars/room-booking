@@ -201,6 +201,15 @@ function ReportsPageInner() {
       .catch(() => {});
   }, [searchParams, loadReport]);
 
+  async function deleteReport(period: string) {
+    if (!confirm(`Delete the ${fmtPeriod(period)} report?`)) return;
+    await fetch(`/api/admin/reports?period=${period}`, { method: 'DELETE' });
+    setSavedReports(prev => prev.filter(r => r.period !== period));
+    if (activePeriod === period) { setActiveReport(null); setActivePeriod(''); }
+    // Also clear the dashboard alert dismissal so it can re-appear if regenerated
+    try { localStorage.removeItem('report_alert_dismissed'); } catch { /* ignore */ }
+  }
+
   async function generateCustom() {
     setGenerating(true);
     setError('');
@@ -264,11 +273,22 @@ function ReportsPageInner() {
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-4 pt-4 pb-2">Saved reports</p>
               {savedReports.map(r => (
-                <button key={r.period} onClick={() => loadReport(r.period)}
-                  className={`w-full text-left px-4 py-3 border-t border-gray-50 hover:bg-gray-50 transition-colors ${activePeriod === r.period ? 'bg-[#f0f5ee]' : ''}`}>
-                  <p className="text-sm font-semibold text-gray-800">{fmtPeriod(r.period)}</p>
-                  <p className="text-xs text-gray-400">{r.totalBookings} bookings · {GHS(r.totalRevenueGHS)}</p>
-                </button>
+                <div key={r.period}
+                  className={`flex items-center border-t border-gray-50 group ${activePeriod === r.period ? 'bg-[#f0f5ee]' : 'hover:bg-gray-50'} transition-colors`}>
+                  <button onClick={() => loadReport(r.period)} className="flex-1 text-left px-4 py-3">
+                    <p className="text-sm font-semibold text-gray-800">{fmtPeriod(r.period)}</p>
+                    <p className="text-xs text-gray-400">{r.totalBookings} bookings · {GHS(r.totalRevenueGHS)}</p>
+                  </button>
+                  <button
+                    onClick={() => deleteReport(r.period)}
+                    className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all px-3 py-3"
+                    aria-label="Delete report"
+                  >
+                    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+                    </svg>
+                  </button>
+                </div>
               ))}
             </div>
           )}

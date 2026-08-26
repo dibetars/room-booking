@@ -3,6 +3,7 @@ import {
   generateReport, getReport, saveReport, listReports,
   prevMonthPeriod, periodToDates,
 } from '@/lib/reports';
+import { deleteSetting } from '@/lib/supabase';
 
 // GET /api/admin/reports — list all saved reports
 // GET /api/admin/reports?period=2026-07 — fetch one report
@@ -55,6 +56,19 @@ export async function POST(req: NextRequest) {
     const report = await generateReport(dateFrom, dateTo, p);
     await saveReport(report);
     return NextResponse.json({ report });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+// DELETE /api/admin/reports?period=2026-07
+export async function DELETE(req: NextRequest) {
+  const period = req.nextUrl.searchParams.get('period');
+  if (!period) return NextResponse.json({ error: 'period required' }, { status: 400 });
+  try {
+    await deleteSetting(`report_${period}`);
+    return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: message }, { status: 500 });
