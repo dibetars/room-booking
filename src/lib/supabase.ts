@@ -114,6 +114,15 @@ export async function setSetting(key: string, value: unknown): Promise<void> {
   if (error) throw error;
 }
 
+export async function listSettingsByPrefix(prefix: string): Promise<{ key: string; value: unknown }[]> {
+  const { data } = await getClient()
+    .from('app_settings')
+    .select('key, value')
+    .like('key', `${prefix}%`)
+    .order('key', { ascending: false });
+  return data ?? [];
+}
+
 export async function getExpiredHeldIntents(): Promise<BookingIntent[]> {
   const { data, error } = await getClient()
     .from('booking_intents')

@@ -98,6 +98,7 @@ export default function AdminDashboard() {
   const [roomFilter, setRoomFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [channelFilter, setChannelFilter] = useState('all');
+  const [reportAlert, setReportAlert] = useState<{ period: string; generated: boolean } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -111,6 +112,20 @@ export default function AdminDashboard() {
   }, [router, daysBack]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Auto-generate last month's report on dashboard load (once per month)
+  useEffect(() => {
+    const STORAGE_KEY = 'report_alert_dismissed';
+    fetch('/api/admin/reports?check=prev')
+      .then(r => r.json())
+      .then(d => {
+        if (!d.period) return;
+        const dismissed = localStorage.getItem(STORAGE_KEY);
+        if (dismissed === d.period) return; // already dismissed this month's alert
+        setReportAlert({ period: d.period, generated: d.generated ?? false });
+      })
+      .catch(() => {});
+  }, []);
 
   async function doAction(id: number, action: string) {
     setActionLoading(id);
@@ -187,6 +202,30 @@ export default function AdminDashboard() {
   return (
     <>
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
+        {/* Monthly report alert */}
+        {reportAlert && (
+          <div className="flex items-center gap-3 bg-[#f0f5ee] border border-[#2d5a27]/20 rounded-xl px-4 py-3">
+            <span className="text-lg">📊</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-[#2d5a27]">
+                {reportAlert.generated ? 'New monthly report ready' : 'Monthly report available'}
+              </p>
+              <p className="text-xs text-gray-500">
+                {new Date(reportAlert.period + '-01').toLocaleDateString('en-GH', { month: 'long', year: 'numeric' })} — bookings, sources &amp; revenue
+              </p>
+            </div>
+            <a href={`/admin/reports?period=${reportAlert.period}`}
+              className="text-xs font-semibold text-white bg-[#2d5a27] px-3 py-1.5 rounded-lg hover:bg-[#245020] transition-colors shrink-0">
+              View report
+            </a>
+            <button
+              onClick={() => { localStorage.setItem('report_alert_dismissed', reportAlert.period); setReportAlert(null); }}
+              className="text-gray-300 hover:text-gray-500 shrink-0 text-lg leading-none"
+              aria-label="Dismiss"
+            >×</button>
+          </div>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           {[
