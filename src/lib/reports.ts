@@ -44,14 +44,19 @@ const CHANNEL_MAP: Record<string, string> = {
 
 function resolveChannel(b: { referer?: string; channel?: string }): string {
   const ch = (b as { channel?: string }).channel;
-  if (ch && CHANNEL_MAP[ch.toLowerCase()]) return CHANNEL_MAP[ch.toLowerCase()];
+  if (ch) {
+    const mapped = CHANNEL_MAP[ch.toLowerCase()];
+    return mapped ?? ch; // use raw channel name if not in our map
+  }
   if (b.referer) {
     const key = b.referer.toLowerCase();
     if (CHANNEL_MAP[key]) return CHANNEL_MAP[key];
     if (key.includes('admin')) return 'Admin';
     if (key.includes('bokoboko') || key.includes('direct')) return 'Website';
   }
-  return 'Other';
+  // Beds24 doesn't echo referer back on GET — bookings with no channel
+  // are our own direct/website bookings.
+  return 'Website';
 }
 
 function aggregate(items: string[], revenues: number[]): ReportEntry[] {
@@ -75,10 +80,8 @@ export async function generateReport(dateFrom: string, dateTo: string, period: s
   const revenues: number[] = [];
 
   for (const b of bookings) {
-    const nights = Math.max(1, Math.round(
-      (new Date(b.departure).getTime() - new Date(b.arrival).getTime()) / 86400000
-    ));
-    const ghsRevenue = (b.price ?? 0) * nights * GHS_PER_USD;
+    // b.price from Beds24 is the total booking price, not per-night
+    const ghsRevenue = (b.price ?? 0) * GHS_PER_USD;
     channels.push(resolveChannel(b));
     rooms.push(ROOM_NAMES[b.roomId] ?? `Room ${b.roomId}`);
     statuses.push(b.status);
