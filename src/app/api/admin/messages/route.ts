@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       getMessages(bookingId
         ? { bookingId: Number(bookingId) }
         : { startDate, endDate }),
-      bookingId ? Promise.resolve([]) : getBookings({ startArrival: startDate, endArrival: endDate }),
+      bookingId ? Promise.resolve([]) : getBookings({ arrivalFrom: startDate, arrivalTo: endDate }),
     ]);
 
     // Build a lookup map for booking info

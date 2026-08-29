@@ -160,23 +160,46 @@ export async function updateBookingStatus(
   }
 }
 
-export async function getBookings(params: {
-  startArrival?: string;
-  endArrival?: string;
-  startDeparture?: string;
-  endDeparture?: string;
-  status?: string;
-}): Promise<Beds24Booking[]> {
-  const query = new URLSearchParams();
-  Object.entries(params).forEach(([k, v]) => { if (v) query.set(k, v); });
+// Safety valve so a bad `pages` value can't spin forever.
+const MAX_BOOKING_PAGES = 20;
 
-  const res = await beds24Fetch(`/bookings?${query}`);
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Beds24 getBookings failed: ${res.status} ${body}`);
+// Param names must match Beds24 API v2 exactly. v2 silently ignores unknown
+// params and falls back to its default window (arrivals yesterday → +1 year),
+// which looks like "the filter worked but every range returns the same rows".
+export async function getBookings(params: {
+  arrivalFrom?: string;
+  arrivalTo?: string;
+  departureFrom?: string;
+  departureTo?: string;
+  status?: string;
+  propertyId?: number | string;
+  roomId?: number | string;
+}): Promise<Beds24Booking[]> {
+  const collected: Beds24Booking[] = [];
+
+  for (let page = 1; page <= MAX_BOOKING_PAGES; page++) {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') query.set(k, String(v));
+    });
+    query.set('page', String(page));
+
+    const res = await beds24Fetch(`/bookings?${query}`);
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Beds24 getBookings failed: ${res.status} ${body}`);
+    }
+
+    const json = await res.json();
+    if (Array.isArray(json)) return json; // unpaged response shape
+
+    collected.push(...(json?.data ?? []));
+
+    const totalPages = Number(json?.pages ?? 1);
+    if (!Number.isFinite(totalPages) || page >= totalPages) break;
   }
-  const json = await res.json();
-  return Array.isArray(json) ? json : (json?.data ?? []);
+
+  return collected;
 }
 
 export interface Beds24Message {

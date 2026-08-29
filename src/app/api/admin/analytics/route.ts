@@ -30,7 +30,7 @@ export async function GET() {
     return NextResponse.json(await withCache('analytics:main', ANALYTICS_TTL, async () => {
     const from = new Date(Date.now() - 180 * 86400000).toISOString().slice(0, 10);
     const to = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
-    const all = await getBookings({ startArrival: from, endArrival: to });
+    const all = await getBookings({ arrivalFrom: from, arrivalTo: to });
     // Count any real booking toward revenue: OTA bookings (Booking.com, Airbnb)
     // land as 'new', direct paid bookings as 'confirmed'. Exclude only
     // cancelled bookings, unpaid direct holds ('request'), and owner blocks.

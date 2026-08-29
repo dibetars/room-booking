@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const bookings = await withCache(cacheKey, BOOKINGS_TTL, async () => {
-      const beds24Bookings = await getBookings({ startArrival: from, endArrival: to });
+      const beds24Bookings = await getBookings({ arrivalFrom: from, arrivalTo: to });
       const ids = beds24Bookings.map((b) => b.id).filter((id): id is number => !!id);
       const intents = await getIntentsByBeds24Ids(ids);
       const intentMap = new Map(intents.map((i) => [i.beds24_booking_id, i]));
