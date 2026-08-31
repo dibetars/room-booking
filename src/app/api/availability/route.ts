@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { checkAvailability } from '@/lib/beds24';
-import { ROOMS } from '@/lib/rooms';
+import { roomsWithAvailability } from '@/lib/occupancy';
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 const schema = z.object({
@@ -46,15 +45,25 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const roomIds = ROOMS.map((r) => r.id);
-    const availability = await checkAvailability(roomIds, checkIn, checkOut);
+    const guests = adults + children;
+    const { rooms: occupancy } = await roomsWithAvailability(checkIn, checkOut, guests);
 
     const GHS_PER_USD = Number(process.env.GHS_PER_USD ?? '15.5');
 
-    const rooms = ROOMS.map((room) => {
-      const avail = availability.find((a) => a.roomId === room.id);
-      if (!avail?.available) {
-        return { roomId: room.id, name: room.name, description: room.description, maxOccupancy: room.maxOccupancy, photos: room.photos, available: false, totalPriceGHS: 0, perNight: 0, rackRateUSD: room.rackRateUSD };
+    const rooms = occupancy.map((room) => {
+      if (!room.available) {
+        return {
+          roomId: room.id,
+          name: room.name,
+          description: room.description,
+          maxOccupancy: room.maxOccupancy,
+          photos: room.photos,
+          available: false,
+          unavailableReason: room.unavailableReason,
+          totalPriceGHS: 0,
+          perNight: 0,
+          rackRateUSD: room.rackRateUSD,
+        };
       }
       const perNightGHS = Math.round(room.rackRateUSD * GHS_PER_USD);
       const totalPriceGHS = perNightGHS * nights;

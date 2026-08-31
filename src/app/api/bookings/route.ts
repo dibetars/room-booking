@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createBooking } from '@/lib/beds24';
-import { createIntent, getIntentByRef, getSetting } from '@/lib/supabase';
+import { createIntent, getSetting } from '@/lib/supabase';
 import { generateReference } from '@/lib/booking-ref';
-import { ROOMS } from '@/lib/rooms';
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
 import { getDiscount, applyDiscount } from '@/lib/discounts';
+import { assertRoomBookable, BookingBlockedError } from '@/lib/occupancy';
+import { sendDirectGuestEmail } from '@/lib/email';
 
 const schema = z.object({
   roomId: z.number().int().positive(),
@@ -45,15 +46,6 @@ export async function POST(req: NextRequest) {
 
   const { roomId, checkIn, checkOut, adults, children, guest } = parsed.data;
 
-  const room = ROOMS.find((r) => r.id === roomId);
-  if (!room) {
-    return NextResponse.json({ error: 'Room not found' }, { status: 404 });
-  }
-
-  if (adults + children > room.maxOccupancy) {
-    return NextResponse.json({ error: `Room capacity is ${room.maxOccupancy} guests` }, { status: 400 });
-  }
-
   // Dedupe: same email+room+dates within 5 minutes
   const dedupeKey = `${guest.email}:${roomId}:${checkIn}:${checkOut}`;
   const lastRequest = recentRequests.get(dedupeKey);
@@ -64,6 +56,8 @@ export async function POST(req: NextRequest) {
   setTimeout(() => recentRequests.delete(dedupeKey), 5 * 60 * 1000);
 
   try {
+    const room = await assertRoomBookable({ roomId, checkIn, checkOut, adults, children });
+
     const nights = Math.round(
       (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000
     );
@@ -103,7 +97,7 @@ export async function POST(req: NextRequest) {
         info: `Ref: ${reference} — manual payment (Paystack disabled)${discountInfo}`,
       });
 
-      await createIntent({
+      const intent = await createIntent({
         reference,
         status: 'PAYMENT_PENDING',
         beds24_booking_id: beds24Result.id,
@@ -122,6 +116,8 @@ export async function POST(req: NextRequest) {
         beds24_raw: beds24Result,
         paystack_raw: { source: 'manual_mode' },
       });
+
+      sendDirectGuestEmail('booking_request', intent, { roomName: room.name });
 
       return NextResponse.json({ reference, manual: true, discount: discount ?? undefined });
     }
@@ -169,6 +165,9 @@ export async function POST(req: NextRequest) {
     const message = err instanceof Error ? err.message : JSON.stringify(err);
     console.error('[POST /api/bookings]', { ip, message, err });
 
+    if (err instanceof BookingBlockedError) {
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.code === 'ROOM_NOT_FOUND' ? 404 : 409 });
+    }
     if (message === 'BEDS24_RATE_LIMITED') {
       return NextResponse.json({ error: 'Service busy, please try again shortly' }, { status: 429 });
     }

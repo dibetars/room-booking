@@ -66,7 +66,11 @@ function RoomsContent() {
 
         {!loading && !error && rooms.filter((r) => r.available).length === 0 && (
           <div className="bg-white rounded-2xl p-8 text-center shadow">
-            <p className="text-gray-600 mb-4">No rooms available for these dates.</p>
+            <p className="text-gray-600 mb-4">
+              {rooms.every((r) => r.unavailableReason === 'occupancy_full')
+                ? `No rooms can accommodate ${Number(adults) + Number(children)} guests. Try fewer guests, or a family room.`
+                : 'No rooms available for these dates.'}
+            </p>
             <button onClick={() => router.replace('/')} className="bg-[#2d5a27] text-white px-6 py-2 rounded-xl hover:bg-[#245020]">Try different dates</button>
           </div>
         )}

@@ -41,6 +41,7 @@ export interface RoomAvailability {
   maxOccupancy: number;
   description?: string;
   photos?: string[];
+  unavailableReason?: 'occupancy_full' | 'dates_unavailable';
 }
 
 export interface GuestDetails {
@@ -88,4 +89,6 @@ export interface Beds24Booking {
   commission?: number;
   referer?: string;
   info?: string;
+  /** OTA channel from Beds24 GET (airbnb, booking.com, …). Not set on create. */
+  channel?: string;
 }

@@ -22,6 +22,7 @@ interface RoomResult {
   maxOccupancy: number;
   photos: string[];
   available: boolean;
+  unavailableReason?: 'occupancy_full' | 'dates_unavailable';
   totalPriceGHS: number;
   perNight: number;
   rackRateUSD: number;
@@ -473,7 +474,11 @@ export default function HomePage() {
             <div className="overflow-y-auto p-6">
               {searchError && <p className="text-red-600 text-center">{searchError}</p>}
               {results !== null && results.filter(r => r.available).length === 0 && (
-                <p className="text-gray-500 text-center py-8">No rooms available for those dates. Please try different dates.</p>
+                <p className="text-gray-500 text-center py-8">
+                  {results.every(r => r.unavailableReason === 'occupancy_full')
+                    ? `No rooms can accommodate ${Number(adults) + Number(children)} guests. Try fewer guests, or the family room (Truth & Honesty) for up to 4.`
+                    : 'No rooms available for those dates. Please try different dates.'}
+                </p>
               )}
               {results !== null && results.filter(r => r.available).length > 0 && (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">

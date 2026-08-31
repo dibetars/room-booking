@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { updateBookingStatus } from '@/lib/beds24';
 import { getIntentByBeds24Id, updateIntentStatus } from '@/lib/supabase';
 import { invalidate } from '@/lib/server-cache';
+import { sendDirectGuestEmail } from '@/lib/email';
 
 // Drop cached bookings + analytics so the dashboard's refetch after an
 // action reflects the change immediately instead of serving stale data.
@@ -26,6 +27,7 @@ export async function PUT(
   if (action === 'cancel') {
     await updateBookingStatus(beds24Id, 'cancelled');
     if (intent) await updateIntentStatus(intent.reference, 'CANCELLED');
+    sendDirectGuestEmail('booking_cancelled', intent);
     invalidateCaches();
     return NextResponse.json({ ok: true });
   }
@@ -33,6 +35,7 @@ export async function PUT(
   if (action === 'confirm') {
     await updateBookingStatus(beds24Id, 'confirmed');
     if (intent) await updateIntentStatus(intent.reference, 'CONFIRMED');
+    sendDirectGuestEmail('booking_confirmed', intent);
     invalidateCaches();
     return NextResponse.json({ ok: true });
   }
@@ -45,6 +48,8 @@ export async function PUT(
         paystack_raw: { source: 'admin_mark_paid' },
       });
     }
+    sendDirectGuestEmail('booking_confirmed', intent);
+    sendDirectGuestEmail('payment_received', intent);
     invalidateCaches();
     return NextResponse.json({ ok: true });
   }
