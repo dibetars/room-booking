@@ -3,33 +3,64 @@ import { z } from 'zod';
 import { getBookings, createBooking } from '@/lib/beds24';
 import { getIntentsByBeds24Ids, createIntent, getSetting } from '@/lib/supabase';
 import { generateReference } from '@/lib/booking-ref';
-import { ROOMS } from '@/lib/rooms';
 import { withCache, invalidate } from '@/lib/server-cache';
 import { getDiscount, applyDiscount } from '@/lib/discounts';
+import { assertRoomBookable, BookingBlockedError } from '@/lib/occupancy';
+import { sendDirectGuestEmail } from '@/lib/email';
 
 const BOOKINGS_TTL = 2 * 60 * 1000; // 2 minutes
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+type DateType = 'staying' | 'checkin' | 'checkout';
+
+function ymd(offsetDays: number): string {
+  return new Date(Date.now() + offsetDays * 86400000).toISOString().slice(0, 10);
+}
+
+function beds24Range(from: string, to: string, dateType: DateType) {
+  if (dateType === 'checkout') return { departureFrom: from, departureTo: to };
+  if (dateType === 'checkin') return { arrivalFrom: from, arrivalTo: to };
+  // Staying: overlap — arrived on or before range end, left on or after range start
+  return { arrivalTo: to, departureFrom: from };
+}
+
+function inRange(b: { arrival: string; departure: string }, from: string, to: string, dateType: DateType) {
+  if (dateType === 'checkout') return b.departure >= from && b.departure <= to;
+  if (dateType === 'checkin') return b.arrival >= from && b.arrival <= to;
+  return b.arrival <= to && b.departure >= from;
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
-  const daysBack = Number(searchParams.get('daysBack') ?? '7');
+  const dateTypeParam = searchParams.get('dateType');
+  const dateType: DateType =
+    dateTypeParam === 'checkin' || dateTypeParam === 'checkout' ? dateTypeParam : 'staying';
+
+  const fromParam = searchParams.get('from');
+  const toParam = searchParams.get('to');
+  const daysBack = Number(searchParams.get('daysBack') ?? '30');
   const daysAhead = Number(searchParams.get('daysAhead') ?? '60');
 
-  const from = new Date(Date.now() - daysBack * 86400000).toISOString().slice(0, 10);
-  const to = new Date(Date.now() + daysAhead * 86400000).toISOString().slice(0, 10);
-  const cacheKey = `bookings:${daysBack}:${daysAhead}`;
+  const from = fromParam && DATE_RE.test(fromParam) ? fromParam : ymd(-daysBack);
+  const to = toParam && DATE_RE.test(toParam) ? toParam : ymd(daysAhead);
+  if (from > to) {
+    return NextResponse.json({ error: 'from must be on or before to' }, { status: 400 });
+  }
+
+  const cacheKey = `bookings:${dateType}:${from}:${to}`;
 
   try {
     const bookings = await withCache(cacheKey, BOOKINGS_TTL, async () => {
-      const beds24Bookings = await getBookings({ startArrival: from, endArrival: to });
-      const ids = beds24Bookings.map((b) => b.id).filter((id): id is number => !!id);
+      const beds24Bookings = await getBookings(beds24Range(from, to, dateType));
+      const matched = beds24Bookings.filter((b) => inRange(b, from, to, dateType));
+      const ids = matched.map((b) => b.id).filter((id): id is number => !!id);
       const intents = await getIntentsByBeds24Ids(ids);
       const intentMap = new Map(intents.map((i) => [i.beds24_booking_id, i]));
-      return beds24Bookings.map((b) => ({
+      return matched.map((b) => ({
         ...b,
         intent: b.id ? (intentMap.get(b.id) ?? null) : null,
       }));
     });
-    return NextResponse.json({ bookings });
+    return NextResponse.json({ bookings, from, to, dateType });
   } catch (err) {
     const message = err instanceof Error
       ? err.message
@@ -64,20 +95,19 @@ export async function POST(req: NextRequest) {
 
   const { roomId, checkIn, checkOut, adults, children, guestFirstName, guestLastName, email, phone, notes, priceGHS } = parsed.data;
 
-  const room = ROOMS.find((r) => r.id === roomId);
-  if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
-
-  const nights = Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000);
-  const GHS_PER_USD = Number(process.env.GHS_PER_USD ?? '15.5');
-  const augustWeekendEnabled = await getSetting<boolean>('august_weekend_discount', true);
-  const discount = getDiscount(checkIn, checkOut, { augustWeekendEnabled });
-  const autoRateUSD = applyDiscount(room.rackRateUSD * nights, discount);
-  const finalPriceGHS = priceGHS ?? autoRateUSD * GHS_PER_USD;
-  const amountPesewas = Math.round(finalPriceGHS * 100);
-  const discountInfo = discount ? ` [${discount.code} -${discount.discountPct}%]` : '';
-  const reference = generateReference();
-
   try {
+    const room = await assertRoomBookable({ roomId, checkIn, checkOut, adults, children });
+
+    const nights = Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000);
+    const GHS_PER_USD = Number(process.env.GHS_PER_USD ?? '15.5');
+    const augustWeekendEnabled = await getSetting<boolean>('august_weekend_discount', true);
+    const discount = getDiscount(checkIn, checkOut, { augustWeekendEnabled });
+    const autoRateUSD = applyDiscount(room.rackRateUSD * nights, discount);
+    const finalPriceGHS = priceGHS ?? autoRateUSD * GHS_PER_USD;
+    const amountPesewas = Math.round(finalPriceGHS * 100);
+    const discountInfo = discount ? ` [${discount.code} -${discount.discountPct}%]` : '';
+    const reference = generateReference();
+
     const beds24Result = await createBooking({
       roomId,
       arrival: checkIn,
@@ -94,7 +124,7 @@ export async function POST(req: NextRequest) {
       info: notes ? `${reference} — ${notes}${discountInfo}` : `${reference}${discountInfo}`,
     });
 
-    await createIntent({
+    const intent = await createIntent({
       reference,
       status: 'CONFIRMED',
       beds24_booking_id: beds24Result.id,
@@ -114,10 +144,15 @@ export async function POST(req: NextRequest) {
       paystack_raw: { source: 'admin_manual' },
     });
 
+    sendDirectGuestEmail('booking_confirmed', intent, { roomName: room.name });
+
     invalidate('bookings:');
     invalidate('analytics:');
     return NextResponse.json({ reference, beds24Id: beds24Result.id, discount: discount ?? undefined });
   } catch (err) {
+    if (err instanceof BookingBlockedError) {
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.code === 'ROOM_NOT_FOUND' ? 404 : 409 });
+    }
     const message = err instanceof Error ? err.message : 'Failed to create booking';
     return NextResponse.json({ error: message }, { status: 500 });
   }

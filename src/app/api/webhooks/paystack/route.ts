@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyWebhookSignature, verifyTransaction } from '@/lib/paystack';
 import { getIntentByRef, updateIntentStatus } from '@/lib/supabase';
 import { updateBookingStatus } from '@/lib/beds24';
+import { sendDirectGuestEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   const signature = req.headers.get('x-paystack-signature') ?? '';
@@ -84,6 +85,8 @@ async function handleChargeSuccess(reference: string, webhookData: unknown) {
 
   if (confirmed) {
     await updateIntentStatus(reference, 'CONFIRMED');
+    sendDirectGuestEmail('booking_confirmed', intent);
+    sendDirectGuestEmail('payment_received', intent);
   } else {
     await updateIntentStatus(reference, 'RECONCILE_NEEDED');
     console.error('[webhook] RECONCILE_NEEDED — manual action required for', reference);

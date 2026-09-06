@@ -11,36 +11,14 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { ROOMS } from '@/lib/rooms';
-import { getRoomOverrides, upsertRoomOverride } from '@/lib/supabase';
+import { upsertRoomOverride } from '@/lib/supabase';
+import { getEffectiveRooms } from '@/lib/rooms-server';
 import { withCache, invalidate } from '@/lib/server-cache';
 
 const ROOMS_TTL = 10 * 60 * 1000; // 10 minutes
 
 export async function GET() {
-  const rooms = await withCache('rooms:list', ROOMS_TTL, async () => {
-    let overrides: Awaited<ReturnType<typeof getRoomOverrides>> = [];
-    try {
-      overrides = await getRoomOverrides();
-    } catch {
-      // table not yet created — return static config
-    }
-
-    const overrideMap = new Map(overrides.map((o) => [o.room_id, o]));
-
-    return ROOMS.map((r) => {
-      const o = overrideMap.get(r.id);
-      return {
-        id: r.id,
-        name: o?.name ?? r.name,
-        description: o?.description ?? r.description,
-        maxOccupancy: o?.max_occupancy ?? r.maxOccupancy,
-        rackRateUSD: o?.rack_rate_usd ?? r.rackRateUSD,
-        photos: r.photos,
-      };
-    });
-  });
-
+  const rooms = await withCache('rooms:list', ROOMS_TTL, getEffectiveRooms);
   return NextResponse.json({ rooms });
 }
 

@@ -85,33 +85,129 @@ function isToday(d: string) {
   return d === new Date().toISOString().slice(0, 10);
 }
 
+function pad(n: number) { return String(n).padStart(2, '0'); }
+function monthBounds(year: number, monthIndex: number) {
+  const last = new Date(year, monthIndex + 1, 0).getDate();
+  return {
+    from: `${year}-${pad(monthIndex + 1)}-01`,
+    to: `${year}-${pad(monthIndex + 1)}-${pad(last)}`,
+  };
+}
+function thisMonthBounds() {
+  const n = new Date();
+  return monthBounds(n.getFullYear(), n.getMonth());
+}
+
+const DATE_TYPE_LABEL: Record<'staying' | 'checkin' | 'checkout', string> = {
+  staying: 'Staying',
+  checkin: 'Check-in',
+  checkout: 'Check-out',
+};
+
+function fmtRange(from: string, to: string) {
+  const a = new Date(from + 'T00:00:00');
+  const b = new Date(to + 'T00:00:00');
+  const sameMonth = a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+  const sameYear = a.getFullYear() === b.getFullYear();
+  if (from === to) return a.toLocaleDateString('en-GH', { day: 'numeric', month: 'short', year: 'numeric' });
+  if (sameMonth) {
+    return `${a.getDate()}–${b.getDate()} ${a.toLocaleDateString('en-GH', { month: 'short', year: 'numeric' })}`;
+  }
+  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }) };
+  return `${a.toLocaleDateString('en-GH', opts)} – ${b.toLocaleDateString('en-GH', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+}
+
+type FilterDraft = {
+  dateFrom: string;
+  dateTo: string;
+  dateType: 'staying' | 'checkin' | 'checkout';
+  roomFilter: string;
+  statusFilter: string;
+  channelFilter: string;
+};
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [bookings, setBookings] = useState<AdminBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
-  const [filter, setFilter] = useState<'upcoming' | 'today' | 'all'>('upcoming');
+  const [filter, setFilter] = useState<'upcoming' | 'today' | 'all'>('all');
   const [detailBooking, setDetailBooking] = useState<AdminBooking | null>(null);
-  const [daysBack, setDaysBack] = useState(30);
+  const initialMonth = thisMonthBounds();
+  const [dateFrom, setDateFrom] = useState(initialMonth.from);
+  const [dateTo, setDateTo] = useState(initialMonth.to);
+  const [dateType, setDateType] = useState<'staying' | 'checkin' | 'checkout'>('staying');
   const [search, setSearch] = useState('');
   const [roomFilter, setRoomFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [channelFilter, setChannelFilter] = useState('all');
   const [reportAlert, setReportAlert] = useState<{ period: string; generated: boolean } | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [draft, setDraft] = useState<FilterDraft>({
+    dateFrom: initialMonth.from,
+    dateTo: initialMonth.to,
+    dateType: 'staying',
+    roomFilter: 'all',
+    statusFilter: 'all',
+    channelFilter: 'all',
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
-    const res = await fetch(`/api/admin/bookings?daysBack=${daysBack}&daysAhead=60`);
+    const qs = new URLSearchParams({ from: dateFrom, to: dateTo, dateType });
+    const res = await fetch(`/api/admin/bookings?${qs}`);
     if (res.status === 401) { router.push('/admin/login'); return; }
     const data = await res.json();
     if (!res.ok) { setError(data.error ?? 'Failed to load'); setLoading(false); return; }
     setBookings(data.bookings ?? []);
     setLoading(false);
-  }, [router, daysBack]);
+  }, [router, dateFrom, dateTo, dateType]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!showFilters) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowFilters(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showFilters]);
+
+  function openFilters() {
+    setDraft({ dateFrom, dateTo, dateType, roomFilter, statusFilter, channelFilter });
+    setShowFilters(true);
+  }
+
+  function applyFilters() {
+    setDateFrom(draft.dateFrom);
+    setDateTo(draft.dateTo);
+    setDateType(draft.dateType);
+    setRoomFilter(draft.roomFilter);
+    setStatusFilter(draft.statusFilter);
+    setChannelFilter(draft.channelFilter);
+    setShowFilters(false);
+  }
+
+  function resetDraft() {
+    const m = thisMonthBounds();
+    const next: FilterDraft = {
+      dateFrom: m.from,
+      dateTo: m.to,
+      dateType: 'staying',
+      roomFilter: 'all',
+      statusFilter: 'all',
+      channelFilter: 'all',
+    };
+    setDraft(next);
+    setDateFrom(next.dateFrom);
+    setDateTo(next.dateTo);
+    setDateType(next.dateType);
+    setRoomFilter(next.roomFilter);
+    setStatusFilter(next.statusFilter);
+    setChannelFilter(next.channelFilter);
+    setShowFilters(false);
+  }
 
   // Auto-generate last month's report on dashboard load (once per month)
   useEffect(() => {
@@ -175,7 +271,6 @@ export default function AdminDashboard() {
   const today = new Date().toISOString().slice(0, 10);
   const todayArrivals = bookings.filter((b) => b.arrival === today && b.status !== 'cancelled');
   const todayDepartures = bookings.filter((b) => b.departure === today && b.status !== 'cancelled');
-  const upcoming = bookings.filter((b) => b.arrival >= today && b.status !== 'cancelled');
 
   const visible = bookings.filter((b) => {
     // Date range tab
@@ -196,8 +291,15 @@ export default function AdminDashboard() {
     return true;
   });
 
-  const activeFilters = [roomFilter, statusFilter, channelFilter].filter(f => f !== 'all').length + (search.trim() ? 1 : 0);
-  const allChannels = [...new Set(bookings.map(b => channelBadge(b).label))].sort();
+  const monthNow = thisMonthBounds();
+  const rangeIsDefault = dateFrom === monthNow.from && dateTo === monthNow.to && dateType === 'staying';
+  const activeFilters = [roomFilter, statusFilter, channelFilter].filter(f => f !== 'all').length
+    + (dateType !== 'staying' ? 1 : 0)
+    + (dateFrom !== monthNow.from || dateTo !== monthNow.to ? 1 : 0);
+  const allChannels = [...new Set([
+    ...Object.values(CHANNEL_BADGES).map(c => c.label),
+    ...bookings.map(b => channelBadge(b).label),
+  ])].sort();
 
   return (
     <>
@@ -231,7 +333,7 @@ export default function AdminDashboard() {
           {[
             { label: "Today's Arrivals", value: todayArrivals.length, color: 'text-[#2d5a27]' },
             { label: "Today's Departures", value: todayDepartures.length, color: 'text-[#BE6A45]' },
-            { label: 'Upcoming (60d)', value: upcoming.length, color: 'text-blue-600' },
+            { label: 'In this range', value: bookings.filter(b => b.status !== 'cancelled').length, color: 'text-blue-600' },
           ].map(({ label, value, color }) => (
             <div key={label} className="bg-white rounded-xl shadow p-4 text-center">
               <p className={`text-2xl font-bold ${color}`}>{value}</p>
@@ -240,83 +342,49 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {/* Filters */}
-        <div className="space-y-2">
-          {/* Row 1 — date tabs + history + actions */}
-          <div className="flex flex-wrap gap-2 items-center">
-            {(['upcoming', 'today', 'all'] as const).map((f) => (
-              <button key={f} onClick={() => setFilter(f)}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === f ? 'bg-[#2d5a27] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-                {f === 'upcoming' ? 'Upcoming' : f === 'today' ? 'Today' : 'All'}
-              </button>
-            ))}
-            <div className="flex items-center gap-1 bg-white rounded-lg px-2 border border-gray-200">
-              <span className="text-xs text-gray-400 pr-1">History:</span>
-              {([30, 90, 180, 365] as const).map((d) => (
-                <button key={d} onClick={() => setDaysBack(d)}
-                  className={`px-2 py-1 text-xs font-medium rounded transition-colors ${daysBack === d ? 'bg-[#2d5a27] text-white' : 'text-gray-500 hover:text-gray-800'}`}>
-                  {d === 365 ? '1y' : `${d}d`}
-                </button>
-              ))}
-            </div>
-            <div className="ml-auto flex gap-2">
-              <button onClick={load} className="text-sm text-gray-500 hover:text-gray-700 px-3">↻ Refresh</button>
-              {visible.length > 0 && (
-                <button onClick={exportCSV} className="text-sm bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors">↓ Export CSV</button>
-              )}
-            </div>
+        {/* Toolbar */}
+        <div className="flex flex-wrap gap-2 items-center">
+          {(['upcoming', 'today', 'all'] as const).map((f) => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === f ? 'bg-[#2d5a27] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+              {f === 'upcoming' ? 'Upcoming' : f === 'today' ? 'Today' : 'All'}
+            </button>
+          ))}
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input
+              type="text"
+              placeholder="Search guest, email, ref…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2d5a27] w-52"
+            />
           </div>
-
-          {/* Row 2 — search + dropdowns */}
-          <div className="flex flex-wrap gap-2 items-center">
-            {/* Search */}
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <input
-                type="text"
-                placeholder="Search guest, email, ref…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2d5a27] w-52"
-              />
-            </div>
-
-            {/* Room */}
-            <select value={roomFilter} onChange={e => setRoomFilter(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]">
-              <option value="all">All rooms</option>
-              {Object.entries(ROOM_NAMES).map(([id, name]) => (
-                <option key={id} value={id}>{name}</option>
-              ))}
-            </select>
-
-            {/* Status */}
-            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]">
-              <option value="all">All statuses</option>
-              {['confirmed', 'request', 'new', 'cancelled'].map(s => (
-                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-              ))}
-            </select>
-
-            {/* Channel */}
-            <select value={channelFilter} onChange={e => setChannelFilter(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]">
-              <option value="all">All channels</option>
-              {allChannels.map(ch => <option key={ch} value={ch}>{ch}</option>)}
-            </select>
-
-            {/* Clear filters */}
+          <button onClick={openFilters}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+              rangeIsDefault && [roomFilter, statusFilter, channelFilter].every(f => f === 'all')
+                ? 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                : 'bg-[#f0f5ee] text-[#2d5a27] border-[#2d5a27]/20'
+            }`}>
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+            </svg>
+            Filters
+            <span className="text-xs font-normal text-gray-400 hidden sm:inline">
+              {fmtRange(dateFrom, dateTo)} · {DATE_TYPE_LABEL[dateType]}
+            </span>
             {activeFilters > 0 && (
-              <button
-                onClick={() => { setSearch(''); setRoomFilter('all'); setStatusFilter('all'); setChannelFilter('all'); }}
-                className="px-3 py-1.5 text-xs text-gray-500 hover:text-red-600 border border-gray-200 rounded-lg bg-white hover:border-red-200 transition-colors"
-              >
-                Clear {activeFilters} filter{activeFilters > 1 ? 's' : ''} ×
-              </button>
+              <span className="min-w-[1.1rem] h-5 px-1 rounded-full bg-[#2d5a27] text-white text-[10px] font-bold flex items-center justify-center">
+                {activeFilters}
+              </span>
             )}
-
-            <span className="ml-auto text-xs text-gray-400">{visible.length} booking{visible.length !== 1 ? 's' : ''}</span>
+          </button>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-gray-400">{visible.length} booking{visible.length !== 1 ? 's' : ''}</span>
+            <button onClick={load} className="text-sm text-gray-500 hover:text-gray-700 px-2">↻ Refresh</button>
+            {visible.length > 0 && (
+              <button onClick={exportCSV} className="text-sm bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors">↓ Export CSV</button>
+            )}
           </div>
         </div>
 
@@ -553,6 +621,116 @@ export default function AdminDashboard() {
         </div>
       );
     })()}
+
+    {showFilters && (
+      <div className="fixed inset-0 z-[60] bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowFilters(false)}>
+        <div
+          className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-xl p-5 space-y-5 max-h-[90vh] overflow-y-auto"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+            <button onClick={() => setShowFilters(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none" aria-label="Close">×</button>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Date range</p>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="text-xs text-gray-400 col-span-2">
+                Jump to month
+                <input
+                  type="month"
+                  value={draft.dateFrom.slice(0, 7)}
+                  onChange={e => {
+                    if (!e.target.value) return;
+                    const [y, m] = e.target.value.split('-').map(Number);
+                    const b = monthBounds(y, m - 1);
+                    setDraft(d => ({ ...d, dateFrom: b.from, dateTo: b.to }));
+                  }}
+                  className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]"
+                />
+              </label>
+              <label className="text-xs text-gray-400">
+                From
+                <input type="date" value={draft.dateFrom}
+                  onChange={e => setDraft(d => ({ ...d, dateFrom: e.target.value }))}
+                  className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]" />
+              </label>
+              <label className="text-xs text-gray-400">
+                To
+                <input type="date" value={draft.dateTo} min={draft.dateFrom}
+                  onChange={e => setDraft(d => ({ ...d, dateTo: e.target.value }))}
+                  className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]" />
+              </label>
+            </div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mt-4 mb-2">Date type</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(['staying', 'checkin', 'checkout'] as const).map(t => (
+                <button key={t} type="button" onClick={() => setDraft(d => ({ ...d, dateType: t }))}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                    draft.dateType === t
+                      ? 'bg-[#2d5a27] text-white border-[#2d5a27]'
+                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                  }`}>
+                  {DATE_TYPE_LABEL[t]}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              {draft.dateType === 'staying' && 'Anyone in-house at any point in the range.'}
+              {draft.dateType === 'checkin' && 'Only guests arriving in the range.'}
+              {draft.dateType === 'checkout' && 'Only guests departing in the range.'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <label className="text-xs text-gray-400">
+              Room
+              <select value={draft.roomFilter} onChange={e => setDraft(d => ({ ...d, roomFilter: e.target.value }))}
+                className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]">
+                <option value="all">All rooms</option>
+                {Object.entries(ROOM_NAMES).map(([id, name]) => (
+                  <option key={id} value={id}>{name}</option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs text-gray-400">
+              Status
+              <select value={draft.statusFilter} onChange={e => setDraft(d => ({ ...d, statusFilter: e.target.value }))}
+                className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]">
+                <option value="all">All statuses</option>
+                {['confirmed', 'request', 'new', 'cancelled'].map(s => (
+                  <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs text-gray-400">
+              Channel
+              <select value={draft.channelFilter} onChange={e => setDraft(d => ({ ...d, channelFilter: e.target.value }))}
+                className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]">
+                <option value="all">All channels</option>
+                {allChannels.map(ch => <option key={ch} value={ch}>{ch}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <div className="flex items-center gap-2 pt-1">
+            <button type="button" onClick={resetDraft} className="text-sm text-gray-500 hover:text-gray-800 px-2">
+              Reset
+            </button>
+            <button type="button" onClick={() => setShowFilters(false)}
+              className="ml-auto text-sm px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="button" onClick={applyFilters}
+              disabled={draft.dateFrom > draft.dateTo}
+              className="text-sm px-4 py-2 rounded-lg bg-[#2d5a27] text-white font-semibold hover:bg-[#245020] disabled:opacity-50">
+              Apply
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   );
 }

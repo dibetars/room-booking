@@ -51,6 +51,12 @@ export default function NewBookingPage() {
     setError('');
     setSuccess('');
 
+    if (Number(form.adults) + Number(form.children) > room.maxOccupancy) {
+      setError(`This room is full — maximum occupancy is ${room.maxOccupancy} guests.`);
+      setSubmitting(false);
+      return;
+    }
+
     const res = await fetch('/api/admin/bookings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -131,6 +137,9 @@ export default function NewBookingPage() {
                 </select>
               </div>
             </div>
+            <p className="text-[11px] text-gray-400">
+              {room.name} holds up to {room.maxOccupancy} guests. Dates already booked in Beds24 cannot be double-booked.
+            </p>
           </div>
 
           {/* Guest */}
