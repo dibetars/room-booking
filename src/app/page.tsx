@@ -542,7 +542,7 @@ export default function HomePage() {
                     Your booking request for <span className="font-semibold">{selectedRoom.name}</span> ({fmt(checkIn)} → {fmt(checkOut)}) has been received and your dates are held.
                   </p>
                   <p className="text-sm text-gray-600">
-                    We&apos;ve emailed your booking details to <span className="font-semibold">{email}</span>. We&apos;ll follow up to confirm and arrange payment.
+                    We&apos;ve emailed your booking details to <a href="mailto:bookings@bokoboko.org" className="font-semibold text-[#2d5a27] hover:underline">bookings@bokoboko.org</a>. We&apos;ll follow up to confirm and arrange payment.
                   </p>
                   <p className="text-xs text-gray-400">Reference: <span className="font-mono">{bookingSuccess.reference}</span></p>
                   <button onClick={() => { setSelectedRoom(null); setBookingSuccess(null); setName(''); setEmail(''); setPhone(''); }}

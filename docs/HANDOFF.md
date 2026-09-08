@@ -224,6 +224,7 @@ Idempotent (skips if already CONFIRMED).
 | 🔴 **Rotate legacy Smoobu key** | Also exposed in history; Smoobu integration removed but key still live if account exists. |
 | 🟠 **Re-enable payments** | Once Paystack is fixed: switch test→live keys, update webhook URL to `https://book.bokoboko.org/api/webhooks/paystack`, flip Admin → Settings toggle ON. |
 | 🟠 **`ADMIN_PASSWORD` / `ADMIN_SECRET` missing from `.env.example`** | Both are required (used in login route, session, middleware) but not documented in the template. Add them. |
+| 🟡 **Pass.mess WhatsApp** | Future: WhatsApp copy of direct-booking emails via Pass.mess. Spec in `docs/pass-mess-whatsapp.md`. Not started. |
 | 🟡 **No `sitemap.xml`** | `robots.txt` references it but it doesn't exist. Add a Next.js `sitemap.ts`. |
 | 🟡 **Messages module stubbed** | Beds24 `/messages` API client exists; inbox UI is "coming soon" pending channel-support validation. |
 | 🟡 **Validate JSON-LD** | Run Google Rich Results Test against live domain post-deploy. |
