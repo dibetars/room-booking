@@ -196,99 +196,170 @@ function p(text: string): string {
   return `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#333333;font-family:Arial,Helvetica,sans-serif;">${text}</p>`;
 }
 
-function greet(pData: EmailPayload): string {
-  const first = escapeHtml(pData.guestName.trim().split(/\s+/)[0] || 'there');
-  return p(`Hi ${first},`);
+export interface EmailTemplateCopy {
+  subject: string;
+  heading: string;
+  preheader: string;
+  body: string;
 }
 
-export function renderEmail(type: EmailType, data: EmailPayload): { subject: string; html: string } {
-  switch (type) {
-    case 'booking_confirmed':
-      return {
-        subject: `Your stay at BokoBoko is confirmed — ${data.roomName}`,
-        html: layout(
-          `Your booking ${data.reference} is confirmed.`,
-          'Your booking is confirmed',
-          `${greet(data)}
-           ${p('We look forward to welcoming you to BokoBoko in Busua. Your room is reserved — here are the details:')}
-           ${stayCard(data)}
-           ${p('Check-in is from 2:00&nbsp;pm. If you have questions before you arrive, just reply to this email.')}`
-        ),
-      };
-    case 'booking_cancelled':
-      return {
-        subject: `Booking cancelled — ${data.reference}`,
-        html: layout(
-          `Your booking ${data.reference} has been cancelled.`,
-          'Your booking has been cancelled',
-          `${greet(data)}
-           ${p('This reservation is no longer active. The dates have been released.')}
-           ${stayCard(data)}
-           ${p('If this was unexpected, reply to this email and we will help.')}`
-        ),
-      };
-    case 'booking_reminder':
-      return {
-        subject: `See you in 3 days — ${data.roomName} at BokoBoko`,
-        html: layout(
-          `Your stay in ${data.roomName} starts soon.`,
-          'Your stay is in 3 days',
-          `${greet(data)}
-           ${p('Just a reminder that your Busua getaway is almost here. Pack light, bring swimwear, and we will take care of the rest.')}
-           ${stayCard(data)}
-           ${p('Check-in from 2:00&nbsp;pm. We are on the beachfront in Busua — look for BokoBoko / Obrobibini Peace Complex.')}`
-        ),
-      };
-    case 'payment_received':
-      return {
-        subject: `Payment received — ${data.reference}`,
-        html: layout(
-          `We received your payment of ${amountLine(data)}.`,
-          'Payment received',
-          `${greet(data)}
-           ${p('Thank you. This is your receipt for the stay below.')}
-           ${stayCard(data)}
-           ${p(`Amount paid: <strong>${escapeHtml(amountLine(data))}</strong>. Keep this email for your records.`)}`
-        ),
-      };
-    case 'booking_request':
-      return {
-        subject: `We received your booking request — ${data.reference}`,
-        html: layout(
-          `Request ${data.reference} is in. We will confirm shortly.`,
-          'Booking request received',
-          `${greet(data)}
-           ${p('Thanks for requesting a stay at BokoBoko. Your dates are held while we arrange payment with you. We will email again once everything is confirmed.')}
-           ${stayCard(data)}
-           ${p('No further action is needed right now unless we get in touch about payment.')}`
-        ),
-      };
-    case 'check_in_instructions':
-      return {
-        subject: `Check-in details for ${data.roomName}`,
-        html: layout(
-          'How to find us and when to arrive.',
-          'Check-in instructions',
-          `${greet(data)}
-           ${p('Here is everything you need for arrival at BokoBoko Guesthouse in Busua.')}
-           ${stayCard(data)}
-           ${p('<strong>When:</strong> Check-in from 2:00&nbsp;pm · Check-out by 11:00&nbsp;am.')}
-           ${p('<strong>Where:</strong> Busua, Western Region, Ghana (Obrobibini Peace Complex). If you are coming by trotro or taxi from Takoradi / Agona, ask for Busua beach / BokoBoko.')}
-           ${p('<strong>On arrival:</strong> Come to the main house and we will show you to your room. Parking is available on site.')}
-           ${p('Need a late check-in or help with directions? Reply to this email or call +233 59 864 1683.')}`
-        ),
-      };
-    case 'payment_pending':
-      return {
-        subject: `Complete payment to keep ${data.roomName} — ${data.reference}`,
-        html: layout(
-          'Your dates are held pending payment.',
-          'Payment still needed',
-          `${greet(data)}
-           ${p('Your room is held, but the stay is not fully confirmed until payment is received. Please complete payment so we can lock in your dates.')}
-           ${stayCard(data)}
-           ${p('If you have already paid, you can ignore this note — a confirmation will follow shortly.')}`
-        ),
-      };
-  }
+export function templateSettingKey(type: EmailType): string {
+  return `email_template_${type}`;
+}
+
+export const DEFAULT_TEMPLATES: Record<EmailType, EmailTemplateCopy> = {
+  booking_confirmed: {
+    subject: 'Your stay at BokoBoko is confirmed — {{roomName}}',
+    heading: 'Your booking is confirmed',
+    preheader: 'Your booking {{reference}} is confirmed.',
+    body: `Hi {{firstName}},
+
+We look forward to welcoming you to BokoBoko in Busua. Your room is reserved — here are the details:
+
+{{stayCard}}
+
+Check-in is from 12:00 pm. If you have questions before you arrive, just reply to this email.`,
+  },
+  booking_cancelled: {
+    subject: 'Booking cancelled — {{reference}}',
+    heading: 'Your booking has been cancelled',
+    preheader: 'Your booking {{reference}} has been cancelled.',
+    body: `Hi {{firstName}},
+
+This reservation is no longer active. The dates have been released.
+
+{{stayCard}}
+
+If this was unexpected, reply to this email and we will help.`,
+  },
+  booking_reminder: {
+    subject: 'See you in 3 days — {{roomName}} at BokoBoko',
+    heading: 'Your stay is in 3 days',
+    preheader: 'Your stay in {{roomName}} starts soon.',
+    body: `Hi {{firstName}},
+
+Just a reminder that your Busua getaway is almost here. Pack light, bring swimwear, and we will take care of the rest.
+
+{{stayCard}}
+
+Check-in is from 12:00 pm. We are on the beachfront in Busua — look for BokoBoko / Obrobibini Peace Complex.`,
+  },
+  payment_received: {
+    subject: 'Payment received — {{reference}}',
+    heading: 'Payment received',
+    preheader: 'We received your payment of {{amount}}.',
+    body: `Hi {{firstName}},
+
+Thank you. This is your receipt for the stay below.
+
+{{stayCard}}
+
+Amount paid: {{amount}}. Keep this email for your records.`,
+  },
+  booking_request: {
+    subject: 'We received your booking request — {{reference}}',
+    heading: 'Booking request received',
+    preheader: 'Request {{reference}} is in. We will confirm shortly.',
+    body: `Hi {{firstName}},
+
+Thanks for requesting a stay at BokoBoko. Your dates are held while we arrange payment with you. We will email again once everything is confirmed.
+
+{{stayCard}}
+
+No further action is needed right now unless we get in touch about payment.`,
+  },
+  check_in_instructions: {
+    subject: 'Check-in details for {{roomName}}',
+    heading: 'Check-in instructions',
+    preheader: 'How to find us and when to arrive.',
+    body: `Hi {{firstName}},
+
+Here is everything you need for arrival at BokoBoko Guesthouse in Busua.
+
+{{stayCard}}
+
+When: Check-in from 12:00 pm · Check-out by 11:00 am.
+
+Where: Busua, Western Region, Ghana (Obrobibini Peace Complex). If you are coming by trotro or taxi from Takoradi / Agona, ask for Busua beach / BokoBoko.
+
+On arrival: Come to the main house and we will show you to your room. Parking is available on site.
+
+Need a late check-in or help with directions? Reply to this email or call +233 59 864 1683.`,
+  },
+  payment_pending: {
+    subject: 'Complete payment to keep {{roomName}} — {{reference}}',
+    heading: 'Payment still needed',
+    preheader: 'Your dates are held pending payment.',
+    body: `Hi {{firstName}},
+
+Your room is held, but the stay is not fully confirmed until payment is received. Please complete payment so we can lock in your dates.
+
+{{stayCard}}
+
+If you have already paid, you can ignore this note — a confirmation will follow shortly.`,
+  },
+};
+
+export const TEMPLATE_PLACEHOLDERS = [
+  '{{firstName}}', '{{guestName}}', '{{guestEmail}}', '{{roomName}}',
+  '{{checkIn}}', '{{checkOut}}', '{{nights}}', '{{guests}}',
+  '{{reference}}', '{{amount}}', '{{stayCard}}',
+];
+
+function varsFor(data: EmailPayload): Record<string, string> {
+  const first = data.guestName.trim().split(/\s+/)[0] || 'there';
+  return {
+    firstName: first,
+    guestName: data.guestName,
+    guestEmail: data.guestEmail,
+    roomName: data.roomName,
+    checkIn: fmtDate(data.checkIn),
+    checkOut: fmtDate(data.checkOut),
+    nights: nightsLine(data),
+    guests: guestLine(data),
+    reference: data.reference,
+    amount: amountLine(data),
+  };
+}
+
+function interpolate(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => vars[key] ?? '');
+}
+
+function bodyToHtml(body: string, data: EmailPayload, vars: Record<string, string>): string {
+  const blocks = body.replace(/\r\n/g, '\n').split(/\n{2,}/);
+  return blocks.map((block) => {
+    const trimmed = block.trim();
+    if (!trimmed) return '';
+    if (/^\{\{stayCard\}\}$/.test(trimmed)) return stayCard(data);
+    return p(escapeHtml(interpolate(trimmed, vars)).replace(/\n/g, '<br />'));
+  }).join('');
+}
+
+function mergeCopy(type: EmailType, override?: Partial<EmailTemplateCopy> | null): EmailTemplateCopy {
+  const base = DEFAULT_TEMPLATES[type];
+  if (!override) return base;
+  return {
+    subject: override.subject?.trim() || base.subject,
+    heading: override.heading?.trim() || base.heading,
+    preheader: override.preheader?.trim() || base.preheader,
+    body: override.body?.trim() || base.body,
+  };
+}
+
+export function renderEmail(
+  type: EmailType,
+  data: EmailPayload,
+  override?: Partial<EmailTemplateCopy> | null,
+): { subject: string; html: string } {
+  const copy = mergeCopy(type, override);
+  const vars = varsFor(data);
+  return {
+    subject: interpolate(copy.subject, vars),
+    html: layout(
+      interpolate(copy.preheader, vars),
+      interpolate(copy.heading, vars),
+      bodyToHtml(copy.body, data, vars),
+    ),
+  };
 }

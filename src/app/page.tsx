@@ -542,7 +542,7 @@ export default function HomePage() {
                     Your booking request for <span className="font-semibold">{selectedRoom.name}</span> ({fmt(checkIn)} → {fmt(checkOut)}) has been received and your dates are held.
                   </p>
                   <p className="text-sm text-gray-600">
-                    We&apos;ll contact you shortly at <span className="font-semibold">{email}</span> to confirm and arrange payment.
+                    We&apos;ve emailed your booking details to <span className="font-semibold">{email}</span>. We&apos;ll follow up to confirm and arrange payment.
                   </p>
                   <p className="text-xs text-gray-400">Reference: <span className="font-mono">{bookingSuccess.reference}</span></p>
                   <button onClick={() => { setSelectedRoom(null); setBookingSuccess(null); setName(''); setEmail(''); setPhone(''); }}
@@ -608,7 +608,7 @@ export default function HomePage() {
                       </div>
                     ) : (
                       <div className="bg-[#f5f0e8] rounded-xl p-3">
-                        <p className="text-xs text-gray-600">No payment is taken now. We&apos;ll hold your dates and contact you to confirm and arrange payment.</p>
+                        <p className="text-xs text-gray-600">No payment is taken now. We&apos;ll email you a copy of this request and follow up to confirm and arrange payment.</p>
                       </div>
                     )}
 

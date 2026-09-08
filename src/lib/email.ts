@@ -1,17 +1,24 @@
+import { getSetting } from '@/lib/supabase';
 import { Resend } from 'resend';
 import type { BookingIntent } from '@/types';
 import { ROOMS } from '@/lib/rooms';
 import {
   renderEmail,
+  templateSettingKey,
   type EmailPayload,
+  type EmailTemplateCopy,
   type EmailType,
 } from '@/lib/email-templates';
 
 export {
+  DEFAULT_TEMPLATES,
   EMAIL_TYPES,
   SAMPLE_EMAIL_PAYLOAD,
+  TEMPLATE_PLACEHOLDERS,
   renderEmail,
+  templateSettingKey,
   type EmailPayload,
+  type EmailTemplateCopy,
   type EmailType,
   type EmailTypeMeta,
 } from '@/lib/email-templates';
@@ -86,7 +93,8 @@ async function sendDirectGuestEmailAsync(
     if (!cfg) return;
 
     const payload = payloadFromIntent(intent, opts?.roomName);
-    const { subject, html } = renderEmail(type, payload);
+    const override = await getSetting<EmailTemplateCopy | null>(templateSettingKey(type), null);
+    const { subject, html } = renderEmail(type, payload, override);
 
     const { error } = await cfg.resend.emails.send({
       from: cfg.from,
