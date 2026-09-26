@@ -28,7 +28,7 @@ export function lodgingBusinessSchema() {
     description: TAGLINE,
     url: BASE_URL,
     email: 'info@bokoboko.org',
-    telephone: '+233598641683',
+    telephone: '+233256078747',
     image: `${BASE_URL}/images/rooftop.jpg`,
     logo: `${BASE_URL}/images/Boko-Logo.png`,
     priceRange: `$${minPrice}–$${maxPrice}`,

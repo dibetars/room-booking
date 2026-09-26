@@ -755,7 +755,7 @@ export default function HomePage() {
               </p>
               <div className="space-y-1.5 text-white/80 text-sm mb-8">
                 <p>Email: <a href="mailto:info@bokoboko.org" className="font-bold text-white hover:underline">info@bokoboko.org</a></p>
-                <p>Phone: +233 59 864 1683</p>
+                <p>Phone: +233 25 607 8747</p>
                 <p>Address: Busua, Western Region, Ghana</p>
               </div>
               <button onClick={() => setShowSearchModal(true)}
@@ -781,7 +781,7 @@ export default function HomePage() {
               className="h-16 w-auto object-contain mb-6" />
             <div className="space-y-2 text-sm text-gray-300 mb-7">
               <p>Email: <a href="mailto:info@bokoboko.org" className="text-[#BE6A45] hover:underline">info@bokoboko.org</a></p>
-              <p>Phone: +233 59 864 1683</p>
+              <p>Phone: +233 25 607 8747</p>
               <p>Address: Busua, Western Region, Ghana</p>
             </div>
             <div className="flex gap-3">

@@ -160,7 +160,7 @@ function layout(preheader: string, heading: string, inner: string): string {
             <td style="padding:0 28px 28px;">
               <p style="margin:0;font-size:12px;line-height:1.6;color:#8a7a68;font-family:Arial,Helvetica,sans-serif;">
                 BokoBoko Guesthouse · Busua, Western Region, Ghana<br />
-                info@bokoboko.org · +233 59 864 1683
+                info@bokoboko.org · +233 25 607 8747
               </p>
             </td>
           </tr>
@@ -284,7 +284,7 @@ Where: Busua, Western Region, Ghana (Obrobibini Peace Complex). If you are comin
 
 On arrival: Come to the main house and we will show you to your room. Parking is available on site.
 
-Need a late check-in or help with directions? Reply to this email or call +233 59 864 1683.`,
+Need a late check-in or help with directions? Reply to this email or call +233 25 607 8747.`,
   },
   payment_pending: {
     subject: 'Complete payment to keep {{roomName}} — {{reference}}',
