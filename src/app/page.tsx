@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Script from 'next/script';
 import { ROOMS } from '@/lib/rooms';
 import { getDiscount } from '@/lib/discounts';
+import BackgroundMusic from '@/components/BackgroundMusic';
 
 
 const GHS_PER_USD = Number(process.env.NEXT_PUBLIC_GHS_PER_USD ?? '15.5');
@@ -263,6 +264,8 @@ export default function HomePage() {
         </div>
       )}
 
+      <BackgroundMusic />
+
       {/* Navbar */}
       <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 shadow-md h-20' : 'bg-transparent h-24'}`}>
         <div className="max-w-6xl mx-auto px-5 h-full flex items-center justify-between">
@@ -270,7 +273,7 @@ export default function HomePage() {
             <Image src="/images/Boko-Logo.png" alt="BokoBoko" width={120} height={56}
               className={`h-14 w-auto object-contain transition-all ${scrolled ? 'brightness-0' : ''}`} />
           </a>
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-5 lg:gap-8">
             {['About', 'Rooms', 'Amenities', 'Contact'].map((s) => {
               const isActive = activeSection === s.toLowerCase();
               return (
@@ -288,6 +291,10 @@ export default function HomePage() {
             <a href="https://bokobeach.structine.com/" target="_blank" rel="noopener noreferrer"
               className={`font-medium transition-colors hover:text-[#BE6A45] ${scrolled ? 'text-[#333]' : 'text-white'}`}>
               Restaurant
+            </a>
+            <a href="https://bokoevents.structine.com/event-center" target="_blank" rel="noopener noreferrer"
+              className={`font-medium transition-colors hover:text-[#BE6A45] ${scrolled ? 'text-[#333]' : 'text-white'}`}>
+              Event Center
             </a>
             <a href="https://bokoevents.structine.com/events#upcoming" target="_blank" rel="noopener noreferrer"
               className={`font-medium transition-colors hover:text-[#BE6A45] ${scrolled ? 'text-[#333]' : 'text-white'}`}>
@@ -329,6 +336,11 @@ export default function HomePage() {
               onClick={() => setMobileMenuOpen(false)}
               className={`font-medium text-lg ${scrolled ? 'text-[#333]' : 'text-white'} hover:text-[#BE6A45] transition-colors`}>
               Restaurant
+            </a>
+            <a href="https://bokoevents.structine.com/event-center" target="_blank" rel="noopener noreferrer"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`font-medium text-lg ${scrolled ? 'text-[#333]' : 'text-white'} hover:text-[#BE6A45] transition-colors`}>
+              Event Center
             </a>
             <a href="https://bokoevents.structine.com/events#upcoming" target="_blank" rel="noopener noreferrer"
               onClick={() => setMobileMenuOpen(false)}
