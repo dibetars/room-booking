@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 // ─── Payments section ────────────────────────────────────────────────────────
 
@@ -82,146 +82,62 @@ function PaymentsSection() {
   );
 }
 
-// ─── 2FA / TOTP section ──────────────────────────────────────────────────────
+// ─── Email OTP section ───────────────────────────────────────────────────────
 
-const ACCENT_INPUT = 'w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]';
-
-function TotpSection() {
-  const [secret, setSecret] = useState('');
-  const [uri, setUri] = useState('');
-  const [token, setToken] = useState('');
-  const [state, setState] = useState<'checking' | 'active' | 'idle' | 'loading' | 'ready' | 'verifying' | 'verified'>('checking');
-  const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
-  const hasLoaded = useRef(false);
+function EmailOtpSection() {
+  const [active, setActive] = useState<boolean | null>(null);
+  const [emailHint, setEmailHint] = useState('');
 
   useEffect(() => {
-    fetch('/api/admin/totp-setup?status=1')
-      .then(r => r.json())
-      .then(d => setState(d.active ? 'active' : 'idle'))
-      .catch(() => setState('idle'));
+    fetch('/api/admin/settings')
+      .then((r) => r.json())
+      .then((d) => {
+        setActive(d.emailOtpActive === true);
+        setEmailHint(d.emailOtpHint ?? '');
+      })
+      .catch(() => setActive(false));
   }, []);
-
-  const loadSecret = useCallback(() => {
-    setState('loading');
-    fetch('/api/admin/totp-setup')
-      .then(r => r.json())
-      .then(d => { setSecret(d.secret); setUri(d.uri); setState('ready'); setToken(''); setError(''); })
-      .catch(() => setState('idle'));
-  }, []);
-
-  async function verify() {
-    setState('verifying');
-    setError('');
-    const res = await fetch('/api/admin/totp-setup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret, token }),
-    });
-    const data = await res.json();
-    if (data.valid) { setState('verified'); }
-    else { setError('Code incorrect — try again.'); setState('ready'); }
-  }
-
-  function copySecret() {
-    navigator.clipboard.writeText(secret);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  const qrUrl = uri ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(uri)}` : '';
-  const formattedSecret = secret.match(/.{1,4}/g)?.join(' ') ?? secret;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="font-bold text-gray-800">Two-Factor Authentication (TOTP)</h2>
-            {state === 'active' && (
+            <h2 className="font-bold text-gray-800">Email login codes</h2>
+            {active === true && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Active</span>
+            )}
+            {active === false && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Off</span>
             )}
           </div>
           <p className="text-sm text-gray-500 mt-1 max-w-md">
-            Require a 6-digit code from an authenticator app (Google Authenticator, Authy, 1Password) on every login.
+            After the password step, a 6-digit code is emailed to the admin address. Requires
+            {' '}<code className="text-xs bg-gray-50 px-1 rounded">RESEND_API_KEY</code> and
+            {' '}<code className="text-xs bg-gray-50 px-1 rounded">EMAIL_FROM</code>.
           </p>
-          {state === 'active' && (
-            <p className="text-xs text-gray-400 mt-1">
-              2FA is active on this account. To re-enroll with a new device, generate a new secret below.
-            </p>
-          )}
         </div>
-        {state === 'checking' && <span className="text-xs text-gray-400 shrink-0">Loading…</span>}
-        {(state === 'idle' || state === 'active') && (
-          <button
-            onClick={() => { if (!hasLoaded.current) { hasLoaded.current = true; loadSecret(); } else { setState('ready'); } }}
-            className={`shrink-0 text-sm font-semibold px-4 py-2 rounded-lg transition-colors ${
-              state === 'active'
-                ? 'text-gray-500 bg-gray-100 hover:bg-gray-200'
-                : 'text-white bg-[#2d5a27] hover:bg-[#245020]'
-            }`}
-          >
-            {state === 'active' ? 'Re-enroll' : 'Set up 2FA'}
-          </button>
-        )}
+        {active === null && <span className="text-xs text-gray-400 shrink-0">Loading…</span>}
       </div>
 
-      {state === 'loading' && <p className="text-sm text-gray-400">Generating secret…</p>}
+      {active === true && (
+        <div className="flex items-center gap-2 text-sm text-[#2d5a27] font-medium border-t border-gray-100 pt-4">
+          <span className="w-2 h-2 rounded-full bg-[#2d5a27]" />
+          Codes go to {emailHint || 'the configured admin email'}.
+        </div>
+      )}
 
-      {(state === 'ready' || state === 'verifying' || state === 'verified') && (
-        <div className="border-t border-gray-100 pt-4 space-y-5">
-          {/* QR + secret */}
-          {state !== 'verified' && (
-            <div className="flex gap-5 items-start flex-wrap">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qrUrl} alt="TOTP QR code" width={180} height={180} className="rounded-lg border border-gray-100 shrink-0" />
-              <div className="flex-1 min-w-[200px] space-y-3">
-                <p className="text-sm text-gray-600">
-                  <strong>Step 1.</strong> Scan the QR code in your authenticator app, or enter the key manually:
-                </p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-gray-50 rounded-lg px-3 py-2 text-xs font-mono text-gray-700 tracking-widest break-all">{formattedSecret}</code>
-                  <button onClick={copySecret} className="text-xs px-3 py-2 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-800 shrink-0 transition-colors">
-                    {copied ? '✓' : 'Copy'}
-                  </button>
-                </div>
-                <p className="text-sm text-gray-600 pt-1">
-                  <strong>Step 2.</strong> Enter the 6-digit code to verify:
-                </p>
-                <input
-                  type="text" inputMode="numeric" maxLength={6}
-                  value={token} onChange={e => setToken(e.target.value.replace(/\D/g, ''))}
-                  placeholder="000000"
-                  className={`${ACCENT_INPUT} text-center text-xl font-mono tracking-[0.4em]`}
-                />
-                {error && <p className="text-red-600 text-sm">{error}</p>}
-                <div className="flex gap-2">
-                  <button onClick={verify} disabled={token.length !== 6 || state === 'verifying'}
-                    className="flex-1 bg-[#2d5a27] text-white text-sm font-semibold py-2 rounded-lg hover:bg-[#245020] transition-colors disabled:opacity-50">
-                    {state === 'verifying' ? 'Checking…' : 'Verify code'}
-                  </button>
-                  <button onClick={loadSecret} className="text-xs text-gray-400 hover:text-gray-600 px-3 py-2 border border-gray-200 rounded-lg transition-colors">
-                    New secret
-                  </button>
-                  <button onClick={() => setState('idle')} className="text-xs text-gray-400 hover:text-gray-600 px-3 py-2 border border-gray-200 rounded-lg transition-colors">
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {state === 'verified' && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-2">
-              <p className="text-green-800 font-semibold text-sm">✓ Code verified — set this environment variable then redeploy:</p>
-              <div className="bg-white rounded-lg border border-green-200 px-4 py-3 font-mono text-sm text-gray-800 break-all select-all">
-                ADMIN_TOTP_SECRET={secret}
-              </div>
-              <p className="text-xs text-green-600">After the redeploy, every login will require your password + authenticator code. Keep this secret backed up.</p>
-              <button onClick={() => { setState('idle'); setSecret(''); setUri(''); setToken(''); }}
-                className="text-xs text-green-700 underline">Done</button>
-            </div>
-          )}
+      {active === false && (
+        <div className="border-t border-gray-100 pt-4 space-y-2">
+          <p className="text-sm text-gray-600">
+            Set this environment variable, then redeploy:
+          </p>
+          <div className="bg-gray-50 rounded-lg border border-gray-200 px-4 py-3 font-mono text-sm text-gray-800 select-all">
+            ADMIN_EMAIL=you@example.com
+          </div>
+          <p className="text-xs text-gray-400">
+            You can remove <code className="bg-gray-50 px-1 rounded">ADMIN_TOTP_SECRET</code> if it is still set — authenticator codes are no longer used.
+          </p>
         </div>
       )}
     </div>
@@ -238,7 +154,7 @@ export default function SettingsPage() {
         <p className="text-sm text-gray-400 mt-0.5">Payments, security, and account configuration</p>
       </div>
       <PaymentsSection />
-      <TotpSection />
+      <EmailOtpSection />
     </div>
   );
 }

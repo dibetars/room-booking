@@ -1,7 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSessionToken } from '@/lib/admin-session';
+import { sendAdminOtpEmail } from '@/lib/email';
+import {
+  CHALLENGE_COOKIE,
+  createOtpChallenge,
+  generateEmailOtp,
+  maskEmail,
+  verifyOtpChallenge,
+} from '@/lib/email-otp';
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
-import { verifyTotp } from '@/lib/totp';
+
+function isHttps(req: NextRequest): boolean {
+  return (
+    req.headers.get('x-forwarded-proto') === 'https' ||
+    req.nextUrl.protocol === 'https:'
+  );
+}
+
+function cookieOpts(req: NextRequest, maxAge: number) {
+  return {
+    httpOnly: true,
+    secure: isHttps(req),
+    sameSite: 'lax' as const,
+    maxAge,
+    path: '/',
+  };
+}
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
@@ -12,42 +36,57 @@ export async function POST(req: NextRequest) {
   const { password, otp } = await req.json().catch(() => ({}));
   const adminPassword = process.env.ADMIN_PASSWORD;
   const adminSecret = process.env.ADMIN_SECRET;
-  const totpSecret = process.env.ADMIN_TOTP_SECRET;
+  const adminEmail = process.env.ADMIN_EMAIL?.trim();
 
   if (!adminPassword || !adminSecret || password !== adminPassword) {
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
   }
 
-  // If TOTP is configured, require OTP
-  if (totpSecret) {
+  // Email OTP when ADMIN_EMAIL is set
+  if (adminEmail) {
     if (!otp) {
-      // Password correct but no OTP supplied — tell client to ask for it
-      return NextResponse.json({ step: 'otp' }, { status: 200 });
+      if (!rateLimit(`admin-otp-send:${ip}`, 5, 15 * 60 * 1000)) {
+        return NextResponse.json({ error: 'Too many codes requested. Try again in a few minutes.' }, { status: 429 });
+      }
+
+      const code = generateEmailOtp();
+      const sent = await sendAdminOtpEmail(adminEmail, code);
+      if (!sent) {
+        return NextResponse.json(
+          { error: 'Could not send login code. Check email configuration.' },
+          { status: 503 }
+        );
+      }
+
+      const challenge = await createOtpChallenge(code, adminSecret);
+      const res = NextResponse.json({
+        step: 'otp',
+        emailHint: maskEmail(adminEmail),
+      });
+      res.cookies.set(CHALLENGE_COOKIE, challenge.cookieValue, cookieOpts(req, challenge.maxAge));
+      return res;
     }
-    const valid = await verifyTotp(totpSecret, String(otp));
+
+    const challengeCookie = req.cookies.get(CHALLENGE_COOKIE)?.value;
+    const valid = await verifyOtpChallenge(challengeCookie, String(otp), adminSecret);
     if (!valid) {
-      return NextResponse.json({ error: 'Invalid authenticator code' }, { status: 401 });
+      return NextResponse.json({ error: 'Invalid or expired code' }, { status: 401 });
     }
   }
-
-  const isHttps =
-    req.headers.get('x-forwarded-proto') === 'https' ||
-    req.nextUrl.protocol === 'https:';
 
   const res = NextResponse.json({ ok: true });
   const token = await createSessionToken(adminSecret);
   res.cookies.set('admin_token', token, {
-    httpOnly: true,
-    secure: isHttps,
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7,
-    path: '/',
+    ...cookieOpts(req, 60 * 60 * 24 * 7),
   });
+  // Clear one-time challenge after successful login
+  res.cookies.set(CHALLENGE_COOKIE, '', { ...cookieOpts(req, 0) });
   return res;
 }
 
 export async function DELETE() {
   const res = NextResponse.json({ ok: true });
   res.cookies.delete('admin_token');
+  res.cookies.delete(CHALLENGE_COOKIE);
   return res;
 }

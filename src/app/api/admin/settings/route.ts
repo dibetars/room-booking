@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { maskEmail } from '@/lib/email-otp';
 import { getSetting, setSetting } from '@/lib/supabase';
 
 // Protected by admin middleware (matcher: /api/admin/:path*).
@@ -9,7 +10,13 @@ export async function GET() {
     getSetting<boolean>('payments_enabled', false),
     getSetting<boolean>('august_weekend_discount', true),
   ]);
-  return NextResponse.json({ paymentsEnabled, augustWeekendDiscount });
+  const adminEmail = process.env.ADMIN_EMAIL?.trim() ?? '';
+  return NextResponse.json({
+    paymentsEnabled,
+    augustWeekendDiscount,
+    emailOtpActive: Boolean(adminEmail),
+    emailOtpHint: adminEmail ? maskEmail(adminEmail) : '',
+  });
 }
 
 const schema = z.object({

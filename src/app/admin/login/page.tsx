@@ -8,8 +8,10 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'password' | 'otp'>('password');
+  const [emailHint, setEmailHint] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const otpRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -17,22 +19,28 @@ export default function AdminLogin() {
     if (step === 'otp') otpRef.current?.focus();
   }, [step]);
 
+  async function postLogin(body: { password: string; otp?: string }) {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    return { res, data };
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     const body = step === 'otp' ? { password, otp } : { password };
-    const res = await fetch('/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-
-    const data = await res.json().catch(() => ({}));
+    const { res, data } = await postLogin(body);
 
     if (res.ok && data.step === 'otp') {
       setStep('otp');
+      setEmailHint(data.emailHint ?? '');
+      setOtp('');
       setLoading(false);
       return;
     }
@@ -45,6 +53,19 @@ export default function AdminLogin() {
 
     setError(data.error ?? 'Login failed');
     setLoading(false);
+  }
+
+  async function resendCode() {
+    setResending(true);
+    setError('');
+    const { res, data } = await postLogin({ password });
+    if (res.ok && data.step === 'otp') {
+      setEmailHint(data.emailHint ?? '');
+      setOtp('');
+    } else {
+      setError(data.error ?? 'Could not resend code');
+    }
+    setResending(false);
   }
 
   return (
@@ -71,16 +92,18 @@ export default function AdminLogin() {
           ) : (
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-sm font-medium text-gray-600">Authenticator code</label>
+                <label className="text-sm font-medium text-gray-600">Email code</label>
                 <button
                   type="button"
-                  onClick={() => { setStep('password'); setOtp(''); setError(''); }}
+                  onClick={() => { setStep('password'); setOtp(''); setError(''); setEmailHint(''); }}
                   className="text-xs text-gray-400 hover:text-gray-600"
                 >
                   ← Back
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mb-3">Enter the 6-digit code from your authenticator app.</p>
+              <p className="text-xs text-gray-400 mb-3">
+                We sent a 6-digit code to {emailHint || 'your admin email'}. It expires in 10 minutes.
+              </p>
               <input
                 ref={otpRef}
                 type="text"
@@ -93,6 +116,14 @@ export default function AdminLogin() {
                 required
                 className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-800 text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-[#2d5a27]"
               />
+              <button
+                type="button"
+                onClick={resendCode}
+                disabled={resending || loading}
+                className="mt-2 text-xs text-[#2d5a27] hover:underline disabled:opacity-50"
+              >
+                {resending ? 'Sending…' : 'Resend code'}
+              </button>
             </div>
           )}
 

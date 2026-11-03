@@ -111,3 +111,34 @@ async function sendDirectGuestEmailAsync(
     console.error('[email] send failed', type, intent?.reference, err);
   }
 }
+
+/** Send a one-time admin login code. Returns false if Resend is not configured or send fails. */
+export async function sendAdminOtpEmail(to: string, code: string): Promise<boolean> {
+  const cfg = configured();
+  if (!cfg) return false;
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 420px; margin: 0 auto; color: #333;">
+      <p style="font-size: 16px;">Your BokoBoko admin login code is:</p>
+      <p style="font-size: 32px; font-weight: 700; letter-spacing: 0.35em; font-family: ui-monospace, monospace; margin: 24px 0;">${code}</p>
+      <p style="font-size: 14px; color: #666;">This code expires in 10 minutes. If you did not try to sign in, you can ignore this email.</p>
+    </div>
+  `.trim();
+
+  try {
+    const { error } = await cfg.resend.emails.send({
+      from: cfg.from,
+      to,
+      subject: `${code} is your BokoBoko admin code`,
+      html,
+    });
+    if (error) {
+      console.error('[email] admin OTP Resend error', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[email] admin OTP send failed', err);
+    return false;
+  }
+}
