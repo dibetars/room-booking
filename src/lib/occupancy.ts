@@ -1,4 +1,5 @@
 import { checkAvailability } from '@/lib/beds24';
+import { checkDirectAvailability, getChannelMode } from '@/lib/ical';
 import { getEffectiveRoom, getEffectiveRooms } from '@/lib/rooms-server';
 import type { RoomConfig } from '@/lib/rooms';
 
@@ -24,11 +25,32 @@ export function occupancyErrorMessage(code: OccupancyBlockCode, maxOccupancy?: n
   return 'These dates are no longer available for this room.';
 }
 
+async function resolveRoomAvailability(
+  roomIds: number[],
+  checkIn: string,
+  checkOut: string
+): Promise<{ roomId: number; available: boolean }[]> {
+  const [mode, directRows] = await Promise.all([
+    getChannelMode(),
+    checkDirectAvailability(roomIds, checkIn, checkOut),
+  ]);
+
+  if (mode === 'direct') {
+    return directRows;
+  }
+
+  const beds24Rows = await checkAvailability(roomIds, checkIn, checkOut);
+  const directMap = new Map(directRows.map((r) => [r.roomId, r.available]));
+
+  return beds24Rows.map((row) => ({
+    roomId: row.roomId,
+    available: row.available && (directMap.get(row.roomId) ?? true),
+  }));
+}
+
 /**
- * Beds24 inventory is the source of truth for whether a room still has
- * remaining units on the date range. Guest-count vs room.maxOccupancy is
- * enforced here so a family of 4 cannot book a 2-person room even when
- * that room's calendar is open.
+ * Checks whether a room has remaining availability on the date range
+ * (via Beds24 + local/iCal in 'beds24' mode, or 100% via Supabase + iCal in 'direct' mode).
  */
 export async function assertRoomBookable(opts: {
   roomId: number;
@@ -50,7 +72,7 @@ export async function assertRoomBookable(opts: {
     );
   }
 
-  const rows = await checkAvailability([opts.roomId], opts.checkIn, opts.checkOut);
+  const rows = await resolveRoomAvailability([opts.roomId], opts.checkIn, opts.checkOut);
   const row = rows.find((a) => a.roomId === opts.roomId);
   if (!row?.available) {
     throw new BookingBlockedError(
@@ -72,7 +94,11 @@ export async function roomsWithAvailability(
   rooms: Array<RoomConfig & { available: boolean; unavailableReason?: UnavailableReason }>;
 }> {
   const rooms = await getEffectiveRooms();
-  const availability = await checkAvailability(rooms.map((r) => r.id), checkIn, checkOut);
+  const availability = await resolveRoomAvailability(
+    rooms.map((r) => r.id),
+    checkIn,
+    checkOut
+  );
 
   return {
     rooms: rooms.map((room) => {

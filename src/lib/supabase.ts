@@ -137,3 +137,57 @@ export async function getExpiredHeldIntents(): Promise<BookingIntent[]> {
   if (error) throw error;
   return data ?? [];
 }
+
+/** Fetch active (non-cancelled, non-expired) booking intents overlapping a date window or for a specific room. */
+export async function getActiveBookingIntents(opts?: {
+  roomId?: number;
+  from?: string;
+  to?: string;
+}): Promise<BookingIntent[]> {
+  try {
+    let q = getClient()
+      .from('booking_intents')
+      .select()
+      .in('status', ['HELD', 'PAYMENT_PENDING', 'PAID', 'CONFIRMED']);
+
+    if (opts?.roomId) q = q.eq('room_id', opts.roomId);
+    if (opts?.from) q = q.gt('check_out', opts.from);
+    if (opts?.to) q = q.lt('check_in', opts.to);
+
+    const { data, error } = await q;
+    if (error) return [];
+    return data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+/** Fetch all booking intents overlapping a window (including cancelled) for direct-mode admin/reporting. */
+export async function getAllBookingIntentsInWindow(opts?: {
+  from?: string;
+  to?: string;
+}): Promise<BookingIntent[]> {
+  try {
+    let q = getClient().from('booking_intents').select();
+    if (opts?.from) q = q.gte('check_out', opts.from);
+    if (opts?.to) q = q.lte('check_in', opts.to);
+    const { data, error } = await q.order('check_in', { ascending: false });
+    if (error) return [];
+    return data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function updateIntentStatusById(
+  id: string,
+  status: IntentStatus,
+  extra?: Partial<BookingIntent>
+): Promise<void> {
+  const { error } = await getClient()
+    .from('booking_intents')
+    .update({ status, updated_at: new Date().toISOString(), ...extra })
+    .eq('id', id);
+  if (error) throw error;
+}
+

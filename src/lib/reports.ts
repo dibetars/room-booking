@@ -1,5 +1,7 @@
 import { getBookings } from '@/lib/beds24';
+import { getChannelMode, getDirectBookingsWithIntents } from '@/lib/ical';
 import { getSetting, setSetting, listSettingsByPrefix } from '@/lib/supabase';
+import { getEffectiveExchangeRate } from '@/lib/exchange-rate';
 
 export interface ReportEntry {
   label: string;
@@ -20,8 +22,6 @@ export interface MonthlyReport {
   byRoom: ReportEntry[];
   byStatus: ReportEntry[];
 }
-
-const GHS_PER_USD = Number(process.env.GHS_PER_USD ?? '15.5');
 
 const ROOM_NAMES: Record<number, string> = {
   691857: 'Patience',
@@ -46,7 +46,7 @@ function resolveChannel(b: { referer?: string; channel?: string }): string {
   const ch = (b as { channel?: string }).channel;
   if (ch) {
     const mapped = CHANNEL_MAP[ch.toLowerCase()];
-    return mapped ?? ch; // use raw channel name if not in our map
+    return mapped ?? ch;
   }
   if (b.referer) {
     const key = b.referer.toLowerCase();
@@ -54,8 +54,6 @@ function resolveChannel(b: { referer?: string; channel?: string }): string {
     if (key.includes('admin')) return 'Admin';
     if (key.includes('bokoboko') || key.includes('direct')) return 'Website';
   }
-  // Beds24 doesn't echo referer back on GET — bookings with no channel
-  // are our own direct/website bookings.
   return 'Website';
 }
 
@@ -72,7 +70,13 @@ function aggregate(items: string[], revenues: number[]): ReportEntry[] {
 }
 
 export async function generateReport(dateFrom: string, dateTo: string, period: string): Promise<MonthlyReport> {
-  const all = await getBookings({ arrivalFrom: dateFrom, arrivalTo: dateTo });
+  const mode = await getChannelMode();
+  const [all, GHS_PER_USD] = await Promise.all([
+    mode === 'direct'
+      ? getDirectBookingsWithIntents({ from: dateFrom, to: dateTo })
+      : getBookings({ arrivalFrom: dateFrom, arrivalTo: dateTo }),
+    getEffectiveExchangeRate(),
+  ]);
   // Belt-and-braces: Beds24 now filters server-side, so this should be a no-op.
   const bookings = all.filter(b => b.arrival >= dateFrom && b.arrival <= dateTo);
 

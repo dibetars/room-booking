@@ -1,0 +1,1157 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 5 /Kids [7 0 R 9 0 R 11 0 R 13 0 R 15 0 R] >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 2452 >>
+stream
+q
+0.137 0.278 0.118 rg
+0.00 0.00 960.00 540.00 re f
+Q
+q
+0.745 0.416 0.271 rg
+0.00 532.00 960.00 8.00 re f
+Q
+q
+0.749 0.827 0.737 rg
+BT /F2 9.5 Tf 52.00 502.00 Td (BOKOBOKO BEACH RESORT  -  BUSUA, GHANA) Tj ET
+Q
+q
+0.749 0.827 0.737 rg
+BT /F2 9.5 Tf 756.80 502.00 Td (DOCUMENT 1  -  ERP HANDOVER) Tj ET
+Q
+q
+0.220 0.400 0.196 RG 0.8 w
+52.00 492.00 m 908.00 492.00 l S
+Q
+q
+0.212 0.408 0.188 rg
+52.00 386.00 195.00 24.00 re f
+Q
+q
+0.953 0.898 0.843 rg
+BT /F2 9.5 Tf 64.00 394.00 Td (ERP INTEGRATION GUIDE) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+BT /F2 35 Tf 52.00 340.00 Td (How the BokoBoko Reports) Tj ET
+Q
+q
+0.910 0.765 0.675 rg
+BT /F2 35 Tf 52.00 298.00 Td (Module Works for Your ERP) Tj ET
+Q
+q
+0.898 0.937 0.894 rg
+BT /F1 14 Tf 52.00 250.00 Td (A plain-English technical specification showing how BokoBoko turns reservation data into monthly booking, room,) Tj ET
+Q
+q
+0.898 0.937 0.894 rg
+BT /F1 14 Tf 52.00 230.12 Td (and channel revenue reports - so your ERP can pull or compute the exact same numbers directly.) Tj ET
+Q
+q
+0.173 0.337 0.153 rg
+0.267 0.471 0.243 RG 1 w
+52.00 72.00 270.00 82.00 re B
+Q
+q
+0.745 0.416 0.271 rg
+52.00 72.00 5.00 82.00 re f
+Q
+q
+0.953 0.898 0.843 rg
+BT /F2 10.5 Tf 70.00 128.00 Td (1. CALCULATION RULES) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+BT /F2 14 Tf 70.00 106.00 Td (Slide 2) Tj ET
+Q
+q
+0.812 0.878 0.804 rg
+BT /F1 10.5 Tf 70.00 88.00 Td (4-step pipeline & exact formulas) Tj ET
+Q
+q
+0.173 0.337 0.153 rg
+0.267 0.471 0.243 RG 1 w
+345.00 72.00 270.00 82.00 re B
+Q
+q
+0.745 0.416 0.271 rg
+345.00 72.00 5.00 82.00 re f
+Q
+q
+0.953 0.898 0.843 rg
+BT /F2 10.5 Tf 363.00 128.00 Td (2. DATA CONTRACT) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+BT /F2 14 Tf 363.00 106.00 Td (Slides 3 - 4) Tj ET
+Q
+q
+0.812 0.878 0.804 rg
+BT /F1 10.5 Tf 363.00 88.00 Td (Booking fields, room IDs & JSON output) Tj ET
+Q
+q
+0.173 0.337 0.153 rg
+0.267 0.471 0.243 RG 1 w
+638.00 72.00 270.00 82.00 re B
+Q
+q
+0.745 0.416 0.271 rg
+638.00 72.00 5.00 82.00 re f
+Q
+q
+0.953 0.898 0.843 rg
+BT /F2 10.5 Tf 656.00 128.00 Td (3. ERP DATABASE TABLE) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+BT /F2 14 Tf 656.00 106.00 Td (Slide 5) Tj ET
+Q
+q
+0.812 0.878 0.804 rg
+BT /F1 10.5 Tf 656.00 88.00 Td (Ready-to-use SQL schema & GROUP BY) Tj ET
+Q
+q
+0.220 0.400 0.196 RG 0.8 w
+52.00 40.00 m 908.00 40.00 l S
+Q
+q
+0.749 0.827 0.737 rg
+BT /F1 9.5 Tf 52.00 22.00 Td (BokoBoko Beach Resort  |  Document 1: ERP Reports Architecture Guide) Tj ET
+Q
+q
+0.749 0.827 0.737 rg
+BT /F2 9.5 Tf 850.80 22.00 Td (Slide 1 / 5) Tj ET
+Q
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 4736 >>
+stream
+q
+0.984 0.973 0.949 rg
+0.00 0.00 960.00 540.00 re f
+Q
+q
+0.176 0.353 0.153 rg
+0.00 534.00 960.00 6.00 re f
+Q
+q
+0.424 0.455 0.416 rg
+BT /F2 9.5 Tf 52.00 502.00 Td (REPORTS ENGINE) Tj ET
+Q
+q
+0.424 0.455 0.416 rg
+BT /F2 9.5 Tf 796.00 502.00 Td (CALCULATION PIPELINE) Tj ET
+Q
+q
+0.898 0.875 0.827 RG 0.8 w
+52.00 492.00 m 908.00 492.00 l S
+Q
+q
+0.106 0.149 0.098 rg
+BT /F2 26 Tf 52.00 458.00 Td (How BokoBoko Builds a Monthly Report) Tj ET
+Q
+q
+0.322 0.357 0.314 rg
+BT /F1 12.5 Tf 52.00 434.00 Td (Every report is built in 4 straightforward steps. Your ERP can either call our report endpoint or run these same 4 rules on its own) Tj ET
+Q
+q
+0.322 0.357 0.314 rg
+BT /F1 12.5 Tf 52.00 416.25 Td (database.) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+0.894 0.875 0.827 RG 1 w
+52.00 207.00 202.00 185.00 re B
+Q
+q
+0.176 0.353 0.153 rg
+52.00 207.00 5.00 185.00 re f
+Q
+q
+0.910 0.937 0.902 rg
+68.00 356.00 58.00 20.00 re f
+Q
+q
+0.176 0.353 0.153 rg
+BT /F2 9.5 Tf 76.00 362.00 Td (STEP 1) Tj ET
+Q
+q
+0.106 0.149 0.098 rg
+BT /F2 13 Tf 68.00 334.00 Td (Filter by Check-In Date) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 68.00 312.00 Td (Pull all bookings where) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 68.00 296.05 Td (check-in \(arrival\) falls) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 68.00 280.10 Td (inside [dateFrom, dateTo]. A) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 68.00 264.15 Td (stay checking in on Oct 30) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 68.00 248.20 Td (belongs to October.) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+0.894 0.875 0.827 RG 1 w
+270.00 207.00 202.00 185.00 re B
+Q
+q
+0.745 0.416 0.271 rg
+270.00 207.00 5.00 185.00 re f
+Q
+q
+0.910 0.937 0.902 rg
+286.00 356.00 58.00 20.00 re f
+Q
+q
+0.176 0.353 0.153 rg
+BT /F2 9.5 Tf 294.00 362.00 Td (STEP 2) Tj ET
+Q
+q
+0.106 0.149 0.098 rg
+BT /F2 13 Tf 286.00 334.00 Td (Normalize the Source) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 286.00 312.00 Td (Translate channel / referer) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 286.00 296.05 Td (into clean names: Booking.com,) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 286.00 280.10 Td (Airbnb, Website, Admin,) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 286.00 264.15 Td (Hostelworld, or Expedia.) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+0.894 0.875 0.827 RG 1 w
+488.00 207.00 202.00 185.00 re B
+Q
+q
+0.176 0.353 0.153 rg
+488.00 207.00 5.00 185.00 re f
+Q
+q
+0.910 0.937 0.902 rg
+504.00 356.00 58.00 20.00 re f
+Q
+q
+0.176 0.353 0.153 rg
+BT /F2 9.5 Tf 512.00 362.00 Td (STEP 3) Tj ET
+Q
+q
+0.106 0.149 0.098 rg
+BT /F2 13 Tf 504.00 334.00 Td (Convert USD to GHS) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 504.00 312.00 Td (Multiply total booking price) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 504.00 296.05 Td (\(USD\) by GHS_PER_USD \(15.5\).) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 504.00 280.10 Td (If status is cancelled,) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 504.00 264.15 Td (revenue is set to GHS 0.) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+0.894 0.875 0.827 RG 1 w
+706.00 207.00 202.00 185.00 re B
+Q
+q
+0.745 0.416 0.271 rg
+706.00 207.00 5.00 185.00 re f
+Q
+q
+0.910 0.937 0.902 rg
+722.00 356.00 58.00 20.00 re f
+Q
+q
+0.176 0.353 0.153 rg
+BT /F2 9.5 Tf 730.00 362.00 Td (STEP 4) Tj ET
+Q
+q
+0.106 0.149 0.098 rg
+BT /F2 13 Tf 722.00 334.00 Td (Group Into 3 Tables) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 722.00 312.00 Td (Sum booking count and GHS) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 722.00 296.05 Td (revenue into 3 breakdowns: By) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 722.00 280.10 Td (Source, By Room, and By Status) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 11 Tf 722.00 264.15 Td (\(sorted highest count first\).) Tj ET
+Q
+q
+0.122 0.165 0.114 rg
+52.00 64.00 856.00 122.00 re f
+Q
+q
+0.910 0.765 0.675 rg
+BT /F2 10.5 Tf 72.00 164.00 Td (ACTUAL VS. PROJECTED REVENUE DISTINCTION FOR THE ERP) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 10.5 Tf 72.00 142.00 Td (1. Actual Revenue    : status IN \('confirmed','new'\) AND arrival <= TODAY   \(earned / checked-in\)) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 10.5 Tf 72.00 122.00 Td (2. Projected Revenue : status IN \('confirmed','new'\) AND arrival >  TODAY   \(future on-the-books\)) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 10.5 Tf 72.00 102.00 Td (3. Unpaid Pipeline   : status = 'request'                                   \(holds; exclude from actual\)) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 10.5 Tf 72.00 82.00 Td (4. Cancelled         : status = 'cancelled' -> GHS 0                        \(FX: priceUSD * 15.5\)) Tj ET
+Q
+q
+0.898 0.875 0.827 RG 0.8 w
+52.00 40.00 m 908.00 40.00 l S
+Q
+q
+0.482 0.510 0.475 rg
+BT /F1 9.5 Tf 52.00 22.00 Td (BokoBoko Beach Resort  |  Document 1: ERP Reports Architecture Guide) Tj ET
+Q
+q
+0.482 0.510 0.475 rg
+BT /F2 9.5 Tf 850.80 22.00 Td (Slide 2 / 5) Tj ET
+Q
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 6139 >>
+stream
+q
+0.984 0.973 0.949 rg
+0.00 0.00 960.00 540.00 re f
+Q
+q
+0.176 0.353 0.153 rg
+0.00 534.00 960.00 6.00 re f
+Q
+q
+0.424 0.455 0.416 rg
+BT /F2 9.5 Tf 52.00 502.00 Td (DATA CONTRACT) Tj ET
+Q
+q
+0.424 0.455 0.416 rg
+BT /F2 9.5 Tf 818.40 502.00 Td (FIELDS & LOOKUPS) Tj ET
+Q
+q
+0.898 0.875 0.827 RG 0.8 w
+52.00 492.00 m 908.00 492.00 l S
+Q
+q
+0.106 0.149 0.098 rg
+BT /F2 26 Tf 52.00 458.00 Td (Fields the ERP Needs Per Booking) Tj ET
+Q
+q
+0.322 0.357 0.314 rg
+BT /F1 12.5 Tf 52.00 434.00 Td (Only 7 fields per reservation are required to reproduce all BokoBoko financial and operational reports.) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+0.894 0.875 0.827 RG 1 w
+52.00 66.00 495.00 332.00 re B
+Q
+q
+0.176 0.353 0.153 rg
+52.00 368.00 495.00 30.00 re f
+Q
+q
+1.000 1.000 1.000 rg
+BT /F2 10 Tf 66.00 379.00 Td (FIELD) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+BT /F2 10 Tf 190.00 379.00 Td (TYPE) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+BT /F2 10 Tf 285.00 379.00 Td (HOW REPORTS USES IT) Tj ET
+Q
+q
+0.176 0.353 0.153 rg
+BT /F3 10.5 Tf 66.00 348.00 Td (id) Tj ET
+Q
+q
+0.333 0.365 0.325 rg
+BT /F1 10.5 Tf 190.00 348.00 Td (number / text) Tj ET
+Q
+q
+0.169 0.200 0.161 rg
+BT /F1 10.5 Tf 285.00 348.00 Td (Unique reservation ID \(prevents duplicates\)) Tj ET
+Q
+q
+0.933 0.914 0.875 RG 0.7 w
+52.00 324.00 m 547.00 324.00 l S
+Q
+q
+0.176 0.353 0.153 rg
+BT /F3 10.5 Tf 66.00 308.00 Td (roomId) Tj ET
+Q
+q
+0.333 0.365 0.325 rg
+BT /F1 10.5 Tf 190.00 308.00 Td (number) Tj ET
+Q
+q
+0.169 0.200 0.161 rg
+BT /F1 10.5 Tf 285.00 308.00 Td (Maps to the 7 BokoBoko rooms \(see table on right\)) Tj ET
+Q
+q
+0.933 0.914 0.875 RG 0.7 w
+52.00 284.00 m 547.00 284.00 l S
+Q
+q
+0.176 0.353 0.153 rg
+BT /F3 10.5 Tf 66.00 268.00 Td (arrival) Tj ET
+Q
+q
+0.333 0.365 0.325 rg
+BT /F1 10.5 Tf 190.00 268.00 Td (YYYY-MM-DD) Tj ET
+Q
+q
+0.169 0.200 0.161 rg
+BT /F1 10.5 Tf 285.00 268.00 Td (Primary filter: decides which month owns the stay) Tj ET
+Q
+q
+0.933 0.914 0.875 RG 0.7 w
+52.00 244.00 m 547.00 244.00 l S
+Q
+q
+0.176 0.353 0.153 rg
+BT /F3 10.5 Tf 66.00 228.00 Td (departure) Tj ET
+Q
+q
+0.333 0.365 0.325 rg
+BT /F1 10.5 Tf 190.00 228.00 Td (YYYY-MM-DD) Tj ET
+Q
+q
+0.169 0.200 0.161 rg
+BT /F1 10.5 Tf 285.00 228.00 Td (Used to compute nights \(departure - arrival\)) Tj ET
+Q
+q
+0.933 0.914 0.875 RG 0.7 w
+52.00 204.00 m 547.00 204.00 l S
+Q
+q
+0.176 0.353 0.153 rg
+BT /F3 10.5 Tf 66.00 188.00 Td (status) Tj ET
+Q
+q
+0.333 0.365 0.325 rg
+BT /F1 10.5 Tf 190.00 188.00 Td (text) Tj ET
+Q
+q
+0.169 0.200 0.161 rg
+BT /F1 10.5 Tf 285.00 188.00 Td (confirmed | new | request | cancelled) Tj ET
+Q
+q
+0.933 0.914 0.875 RG 0.7 w
+52.00 164.00 m 547.00 164.00 l S
+Q
+q
+0.176 0.353 0.153 rg
+BT /F3 10.5 Tf 66.00 148.00 Td (price) Tj ET
+Q
+q
+0.333 0.365 0.325 rg
+BT /F1 10.5 Tf 190.00 148.00 Td (number \(USD\)) Tj ET
+Q
+q
+0.169 0.200 0.161 rg
+BT /F1 10.5 Tf 285.00 148.00 Td (Total booking price in USD \(not nightly\)) Tj ET
+Q
+q
+0.933 0.914 0.875 RG 0.7 w
+52.00 124.00 m 547.00 124.00 l S
+Q
+q
+0.176 0.353 0.153 rg
+BT /F3 10.5 Tf 66.00 108.00 Td (channel / referer) Tj ET
+Q
+q
+0.333 0.365 0.325 rg
+BT /F1 10.5 Tf 190.00 108.00 Td (text) Tj ET
+Q
+q
+0.169 0.200 0.161 rg
+BT /F1 10.5 Tf 285.00 108.00 Td (Mapped to Website, Admin, Airbnb, Booking.com...) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+0.894 0.875 0.827 RG 1 w
+568.00 148.00 340.00 250.00 re B
+Q
+q
+0.745 0.416 0.271 rg
+568.00 368.00 340.00 30.00 re f
+Q
+q
+1.000 1.000 1.000 rg
+BT /F2 10 Tf 582.00 379.00 Td (ROOM ID) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+BT /F2 10 Tf 668.00 379.00 Td (ROOM NAME) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+BT /F2 10 Tf 815.00 379.00 Td (RACK USD) Tj ET
+Q
+q
+0.176 0.353 0.153 rg
+BT /F3 10 Tf 582.00 350.00 Td (691857) Tj ET
+Q
+q
+0.137 0.169 0.133 rg
+BT /F2 10.5 Tf 668.00 350.00 Td (Patience) Tj ET
+Q
+q
+0.333 0.365 0.325 rg
+BT /F1 10 Tf 815.00 350.00 Td ($45 / night) Tj ET
+Q
+q
+0.933 0.914 0.875 RG 0.7 w
+568.00 335.00 m 908.00 335.00 l S
+Q
+q
+0.176 0.353 0.153 rg
+BT /F3 10 Tf 582.00 322.00 Td (691859) Tj ET
+Q
+q
+0.137 0.169 0.133 rg
+BT /F2 10.5 Tf 668.00 322.00 Td (Regeneration) Tj ET
+Q
+q
+0.333 0.365 0.325 rg
+BT /F1 10 Tf 815.00 322.00 Td ($45 / night) Tj ET
+Q
+q
+0.933 0.914 0.875 RG 0.7 w
+568.00 307.00 m 908.00 307.00 l S
+Q
+q
+0.176 0.353 0.153 rg
+BT /F3 10 Tf 582.00 294.00 Td (691860) Tj ET
+Q
+q
+0.137 0.169 0.133 rg
+BT /F2 10.5 Tf 668.00 294.00 Td (Humility) Tj ET
+Q
+q
+0.333 0.365 0.325 rg
+BT /F1 10 Tf 815.00 294.00 Td ($40 / night) Tj ET
+Q
+q
+0.933 0.914 0.875 RG 0.7 w
+568.00 279.00 m 908.00 279.00 l S
+Q
+q
+0.176 0.353 0.153 rg
+BT /F3 10 Tf 582.00 266.00 Td (691861) Tj ET
+Q
+q
+0.137 0.169 0.133 rg
+BT /F2 10.5 Tf 668.00 266.00 Td (Wisdom) Tj ET
+Q
+q
+0.333 0.365 0.325 rg
+BT /F1 10 Tf 815.00 266.00 Td ($40 / night) Tj ET
+Q
+q
+0.933 0.914 0.875 RG 0.7 w
+568.00 251.00 m 908.00 251.00 l S
+Q
+q
+0.176 0.353 0.153 rg
+BT /F3 10 Tf 582.00 238.00 Td (691862) Tj ET
+Q
+q
+0.137 0.169 0.133 rg
+BT /F2 10.5 Tf 668.00 238.00 Td (Truth & Honesty) Tj ET
+Q
+q
+0.333 0.365 0.325 rg
+BT /F1 10 Tf 815.00 238.00 Td ($50 / night) Tj ET
+Q
+q
+0.933 0.914 0.875 RG 0.7 w
+568.00 223.00 m 908.00 223.00 l S
+Q
+q
+0.176 0.353 0.153 rg
+BT /F3 10 Tf 582.00 210.00 Td (691863) Tj ET
+Q
+q
+0.137 0.169 0.133 rg
+BT /F2 10.5 Tf 668.00 210.00 Td (Love) Tj ET
+Q
+q
+0.333 0.365 0.325 rg
+BT /F1 10 Tf 815.00 210.00 Td ($40 / night) Tj ET
+Q
+q
+0.933 0.914 0.875 RG 0.7 w
+568.00 195.00 m 908.00 195.00 l S
+Q
+q
+0.176 0.353 0.153 rg
+BT /F3 10 Tf 582.00 182.00 Td (691864) Tj ET
+Q
+q
+0.137 0.169 0.133 rg
+BT /F2 10.5 Tf 668.00 182.00 Td (Generosity) Tj ET
+Q
+q
+0.333 0.365 0.325 rg
+BT /F1 10 Tf 815.00 182.00 Td ($50 / night) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+0.894 0.875 0.827 RG 1 w
+568.00 66.00 340.00 70.00 re B
+Q
+q
+0.176 0.353 0.153 rg
+568.00 66.00 5.00 70.00 re f
+Q
+q
+0.106 0.149 0.098 rg
+BT /F2 11.5 Tf 584.00 116.00 Td (Source Fallback Rule) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 10.5 Tf 584.00 99.00 Td (If channel and referer are blank, the booking came from) Tj ET
+Q
+q
+0.298 0.329 0.290 rg
+BT /F1 10.5 Tf 584.00 84.09 Td (our website and is labeled "Website".) Tj ET
+Q
+q
+0.898 0.875 0.827 RG 0.8 w
+52.00 40.00 m 908.00 40.00 l S
+Q
+q
+0.482 0.510 0.475 rg
+BT /F1 9.5 Tf 52.00 22.00 Td (BokoBoko Beach Resort  |  Document 1: ERP Reports Architecture Guide) Tj ET
+Q
+q
+0.482 0.510 0.475 rg
+BT /F2 9.5 Tf 850.80 22.00 Td (Slide 3 / 5) Tj ET
+Q
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Length 4753 >>
+stream
+q
+0.984 0.973 0.949 rg
+0.00 0.00 960.00 540.00 re f
+Q
+q
+0.176 0.353 0.153 rg
+0.00 534.00 960.00 6.00 re f
+Q
+q
+0.424 0.455 0.416 rg
+BT /F2 9.5 Tf 52.00 502.00 Td (OUTPUT & ENDPOINTS) Tj ET
+Q
+q
+0.424 0.455 0.416 rg
+BT /F2 9.5 Tf 818.40 502.00 Td (ERP PULL OPTIONS) Tj ET
+Q
+q
+0.898 0.875 0.827 RG 0.8 w
+52.00 492.00 m 908.00 492.00 l S
+Q
+q
+0.106 0.149 0.098 rg
+BT /F2 26 Tf 52.00 458.00 Td (Report JSON Shape & How the ERP Pulls Data) Tj ET
+Q
+q
+0.322 0.357 0.314 rg
+BT /F1 12.5 Tf 52.00 434.00 Td (Your partner can pull either raw bookings or finished monthly report objects.) Tj ET
+Q
+q
+0.122 0.165 0.114 rg
+52.00 66.00 420.00 330.00 re f
+Q
+q
+0.910 0.765 0.675 rg
+BT /F2 10 Tf 68.00 372.00 Td (SAMPLE REPORT OBJECT \(MonthlyReport\)) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 350.00 Td ({) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 336.50 Td (  "period": "2026-10",) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 323.00 Td (  "dateFrom": "2026-10-01",) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 309.50 Td (  "dateTo": "2026-10-31",) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 296.00 Td (  "totalBookings": 26,) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 282.50 Td (  "confirmedBookings": 21,) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 269.00 Td (  "cancelledBookings": 2,) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 255.50 Td (  "totalRevenueGHS": 48825,) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 242.00 Td (  "byChannel": [) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 228.50 Td (    { "label": "Website",     "count": 14, "revenue": 26350 },) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 215.00 Td (    { "label": "Booking.com", "count": 8,  "revenue": 15500 },) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 201.50 Td (    { "label": "Airbnb",      "count": 4,  "revenue": 6975 }) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 188.00 Td (  ],) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 174.50 Td (  "byRoom": [) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 161.00 Td (    { "label": "Generosity",  "count": 6,  "revenue": 11625 }) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 147.50 Td (  ],) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 134.00 Td (  "byStatus": [) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 120.50 Td (    { "label": "confirmed",   "count": 21, "revenue": 44000 }) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 107.00 Td (  ]) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.6 Tf 68.00 93.50 Td (}) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+0.894 0.875 0.827 RG 1 w
+492.00 240.00 416.00 156.00 re B
+Q
+q
+0.176 0.353 0.153 rg
+492.00 240.00 5.00 156.00 re f
+Q
+q
+0.106 0.149 0.098 rg
+BT /F2 13.5 Tf 512.00 372.00 Td (Option A: ERP Computes Reports Locally) Tj ET
+Q
+q
+0.176 0.353 0.153 rg
+512.00 352.00 5.00 5.00 re f
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 11 Tf 525.00 350.00 Td (Pull raw bookings from GET /api/admin/bookings \(or upstream\).) Tj ET
+Q
+q
+0.176 0.353 0.153 rg
+512.00 331.82 5.00 5.00 re f
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 11 Tf 525.00 329.82 Td (Store rows in erp_reservations \(see SQL on Slide 5\).) Tj ET
+Q
+q
+0.176 0.353 0.153 rg
+512.00 311.64 5.00 5.00 re f
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 11 Tf 525.00 309.64 Td (Run 3 GROUP BY queries: by channel_label, room_name, and status.) Tj ET
+Q
+q
+0.176 0.353 0.153 rg
+512.00 291.46 5.00 5.00 re f
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 11 Tf 525.00 289.46 Td (Best when the ERP needs guest-level drill-down and custom) Tj ET
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 11 Tf 525.00 274.28 Td (periods.) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+0.894 0.875 0.827 RG 1 w
+492.00 66.00 416.00 158.00 re B
+Q
+q
+0.745 0.416 0.271 rg
+492.00 66.00 5.00 158.00 re f
+Q
+q
+0.106 0.149 0.098 rg
+BT /F2 13.5 Tf 512.00 200.00 Td (Option B: ERP Pulls Ready-Made Reports) Tj ET
+Q
+q
+0.745 0.416 0.271 rg
+512.00 180.00 5.00 5.00 re f
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 11 Tf 525.00 178.00 Td (GET /api/admin/reports?period=YYYY-MM fetches a saved monthly) Tj ET
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 11 Tf 525.00 162.82 Td (report.) Tj ET
+Q
+q
+0.745 0.416 0.271 rg
+512.00 144.64 5.00 5.00 re f
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 11 Tf 525.00 142.64 Td (POST /api/admin/reports with { dateFrom, dateTo } generates any) Tj ET
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 11 Tf 525.00 127.46 Td (range.) Tj ET
+Q
+q
+0.745 0.416 0.271 rg
+512.00 109.28 5.00 5.00 re f
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 11 Tf 525.00 107.28 Td (Zero calculation code required inside the ERP.) Tj ET
+Q
+q
+0.898 0.875 0.827 RG 0.8 w
+52.00 40.00 m 908.00 40.00 l S
+Q
+q
+0.482 0.510 0.475 rg
+BT /F1 9.5 Tf 52.00 22.00 Td (BokoBoko Beach Resort  |  Document 1: ERP Reports Architecture Guide) Tj ET
+Q
+q
+0.482 0.510 0.475 rg
+BT /F2 9.5 Tf 850.80 22.00 Td (Slide 4 / 5) Tj ET
+Q
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 12 0 R >>
+endobj
+14 0 obj
+<< /Length 4663 >>
+stream
+q
+0.984 0.973 0.949 rg
+0.00 0.00 960.00 540.00 re f
+Q
+q
+0.176 0.353 0.153 rg
+0.00 534.00 960.00 6.00 re f
+Q
+q
+0.424 0.455 0.416 rg
+BT /F2 9.5 Tf 52.00 502.00 Td (DATABASE DESIGN) Tj ET
+Q
+q
+0.424 0.455 0.416 rg
+BT /F2 9.5 Tf 835.20 502.00 Td (SQL BLUEPRINT) Tj ET
+Q
+q
+0.898 0.875 0.827 RG 0.8 w
+52.00 492.00 m 908.00 492.00 l S
+Q
+q
+0.106 0.149 0.098 rg
+BT /F2 26 Tf 52.00 458.00 Td (Recommended ERP Table & Rollup Queries) Tj ET
+Q
+q
+0.322 0.357 0.314 rg
+BT /F1 12.5 Tf 52.00 434.00 Td (One normalized table lets the ERP reproduce every BokoBoko report with simple GROUP BY statements.) Tj ET
+Q
+q
+0.122 0.165 0.114 rg
+52.00 66.00 465.00 330.00 re f
+Q
+q
+0.910 0.765 0.675 rg
+BT /F2 10 Tf 68.00 374.00 Td (SQL SCHEMA: erp_reservations) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 352.00 Td (CREATE TABLE erp_reservations \() Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 338.50 Td (  id              BIGSERIAL PRIMARY KEY,) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 325.00 Td (  external_source TEXT NOT NULL, -- direct|airbnb|booking) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 311.50 Td (  external_id     TEXT NOT NULL,) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 298.00 Td (  booking_ref     TEXT,          -- BKB-YYYYMMDD-XXXXXX) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 284.50 Td (  room_id         INTEGER NOT NULL,) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 271.00 Td (  room_name       TEXT NOT NULL,) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 257.50 Td (  guest_name      TEXT,) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 244.00 Td (  arrival         DATE NOT NULL,) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 230.50 Td (  departure       DATE NOT NULL,) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 217.00 Td (  status          TEXT NOT NULL, -- confirmed|new|cancelled) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 203.50 Td (  channel_label   TEXT NOT NULL, -- Website|Airbnb|Booking.com) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 190.00 Td (  price_usd       NUMERIC\(12,2\) DEFAULT 0,) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 176.50 Td (  fx_ghs_per_usd  NUMERIC\(10,4\) DEFAULT 15.5,) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 163.00 Td (  revenue_ghs     NUMERIC\(14,2\) GENERATED ALWAYS AS \() Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 149.50 Td (    CASE WHEN status = 'cancelled' THEN 0) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 136.00 Td (         ELSE ROUND\(price_usd * fx_ghs_per_usd, 2\) END) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 122.50 Td (  \) STORED,) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 109.00 Td (  UNIQUE \(external_source, external_id\)) Tj ET
+Q
+q
+0.957 0.945 0.918 rg
+BT /F3 9.3 Tf 68.00 95.50 Td (\);) Tj ET
+Q
+q
+1.000 1.000 1.000 rg
+0.894 0.875 0.827 RG 1 w
+536.00 66.00 372.00 330.00 re B
+Q
+q
+0.176 0.353 0.153 rg
+536.00 66.00 5.00 330.00 re f
+Q
+q
+0.106 0.149 0.098 rg
+BT /F2 14 Tf 556.00 370.00 Td (3 Queries That Build the Report) Tj ET
+Q
+q
+0.176 0.353 0.153 rg
+BT /F2 10.5 Tf 556.00 348.00 Td (Filter all queries with: WHERE arrival BETWEEN :dateFrom AND) Tj ET
+Q
+q
+0.176 0.353 0.153 rg
+BT /F2 10.5 Tf 556.00 333.09 Td (:dateTo) Tj ET
+Q
+q
+0.176 0.353 0.153 rg
+556.00 319.50 5.00 5.00 re f
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 10.5 Tf 569.00 318.00 Td (By Source: SELECT channel_label AS label, COUNT\(*\),) Tj ET
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 10.5 Tf 569.00 303.51 Td (SUM\(revenue_ghs\) FROM erp_reservations GROUP BY) Tj ET
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 10.5 Tf 569.00 289.02 Td (channel_label ORDER BY COUNT\(*\) DESC;) Tj ET
+Q
+q
+0.176 0.353 0.153 rg
+556.00 266.03 5.00 5.00 re f
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 10.5 Tf 569.00 264.53 Td (By Room: SELECT room_name AS label, COUNT\(*\),) Tj ET
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 10.5 Tf 569.00 250.04 Td (SUM\(revenue_ghs\) FROM erp_reservations GROUP BY room_name) Tj ET
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 10.5 Tf 569.00 235.55 Td (ORDER BY COUNT\(*\) DESC;) Tj ET
+Q
+q
+0.176 0.353 0.153 rg
+556.00 212.56 5.00 5.00 re f
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 10.5 Tf 569.00 211.06 Td (By Status: SELECT status AS label, COUNT\(*\),) Tj ET
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 10.5 Tf 569.00 196.57 Td (SUM\(revenue_ghs\) FROM erp_reservations GROUP BY status) Tj ET
+Q
+q
+0.263 0.294 0.255 rg
+BT /F1 10.5 Tf 569.00 182.08 Td (ORDER BY COUNT\(*\) DESC;) Tj ET
+Q
+q
+0.898 0.875 0.827 RG 0.8 w
+52.00 40.00 m 908.00 40.00 l S
+Q
+q
+0.482 0.510 0.475 rg
+BT /F1 9.5 Tf 52.00 22.00 Td (BokoBoko Beach Resort  |  Document 1: ERP Reports Architecture Guide) Tj ET
+Q
+q
+0.482 0.510 0.475 rg
+BT /F2 9.5 Tf 850.80 22.00 Td (Slide 5 / 5) Tj ET
+Q
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 960 540] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 14 0 R >>
+endobj
+xref
+0 16
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000148 00000 n 
+0000000245 00000 n 
+0000000347 00000 n 
+0000000442 00000 n 
+0000002946 00000 n 
+0000003092 00000 n 
+0000007880 00000 n 
+0000008026 00000 n 
+0000014218 00000 n 
+0000014366 00000 n 
+0000019172 00000 n 
+0000019320 00000 n 
+0000024036 00000 n 
+trailer
+<< /Size 16 /Root 1 0 R >>
+startxref
+24184
+%%EOF

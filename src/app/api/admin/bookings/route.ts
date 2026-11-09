@@ -7,6 +7,8 @@ import { withCache, invalidate } from '@/lib/server-cache';
 import { getDiscount, applyDiscount } from '@/lib/discounts';
 import { assertRoomBookable, BookingBlockedError } from '@/lib/occupancy';
 import { sendDirectGuestEmail } from '@/lib/email';
+import { getEffectiveExchangeRate } from '@/lib/exchange-rate';
+import { getChannelMode, getDirectBookingsWithIntents } from '@/lib/ical';
 
 const BOOKINGS_TTL = 2 * 60 * 1000; // 2 minutes
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -50,6 +52,11 @@ export async function GET(req: NextRequest) {
 
   try {
     const bookings = await withCache(cacheKey, BOOKINGS_TTL, async () => {
+      const mode = await getChannelMode();
+      if (mode === 'direct') {
+        const directRows = await getDirectBookingsWithIntents({ from, to });
+        return directRows.filter((b) => inRange(b, from, to, dateType));
+      }
       const beds24Bookings = await getBookings(beds24Range(from, to, dateType));
       const matched = beds24Bookings.filter((b) => inRange(b, from, to, dateType));
       const ids = matched.map((b) => b.id).filter((id): id is number => !!id);
@@ -99,8 +106,11 @@ export async function POST(req: NextRequest) {
     const room = await assertRoomBookable({ roomId, checkIn, checkOut, adults, children });
 
     const nights = Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000);
-    const GHS_PER_USD = Number(process.env.GHS_PER_USD ?? '15.5');
-    const augustWeekendEnabled = await getSetting<boolean>('august_weekend_discount', true);
+    const [augustWeekendEnabled, GHS_PER_USD, channelMode] = await Promise.all([
+      getSetting<boolean>('august_weekend_discount', true),
+      getEffectiveExchangeRate(),
+      getChannelMode(),
+    ]);
     const discount = getDiscount(checkIn, checkOut, { augustWeekendEnabled });
     const autoRateUSD = applyDiscount(room.rackRateUSD * nights, discount);
     const finalPriceGHS = priceGHS ?? autoRateUSD * GHS_PER_USD;
@@ -108,26 +118,29 @@ export async function POST(req: NextRequest) {
     const discountInfo = discount ? ` [${discount.code} -${discount.discountPct}%]` : '';
     const reference = generateReference();
 
-    const beds24Result = await createBooking({
-      roomId,
-      arrival: checkIn,
-      departure: checkOut,
-      numAdult: adults,
-      numChild: children,
-      firstName: guestFirstName,
-      lastName: guestLastName,
-      email,
-      phone,
-      status: 'confirmed',
-      price: autoRateUSD,
-      referer: 'BokoBoko Admin',
-      info: notes ? `${reference} — ${notes}${discountInfo}` : `${reference}${discountInfo}`,
-    });
+    const beds24Result =
+      channelMode === 'direct'
+        ? null
+        : await createBooking({
+            roomId,
+            arrival: checkIn,
+            departure: checkOut,
+            numAdult: adults,
+            numChild: children,
+            firstName: guestFirstName,
+            lastName: guestLastName,
+            email,
+            phone,
+            status: 'confirmed',
+            price: autoRateUSD,
+            referer: 'BokoBoko Admin',
+            info: notes ? `${reference} — ${notes}${discountInfo}` : `${reference}${discountInfo}`,
+          });
 
     const intent = await createIntent({
       reference,
       status: 'CONFIRMED',
-      beds24_booking_id: beds24Result.id,
+      beds24_booking_id: beds24Result?.id ?? null,
       room_id: roomId,
       check_in: checkIn,
       check_out: checkOut,
@@ -140,7 +153,7 @@ export async function POST(req: NextRequest) {
       currency: 'GHS',
       paystack_status: 'manual',
       expires_at: null,
-      beds24_raw: beds24Result,
+      beds24_raw: beds24Result ?? { mode: 'direct' },
       paystack_raw: { source: 'admin_manual' },
     });
 
@@ -148,7 +161,7 @@ export async function POST(req: NextRequest) {
 
     invalidate('bookings:');
     invalidate('analytics:');
-    return NextResponse.json({ reference, beds24Id: beds24Result.id, discount: discount ?? undefined });
+    return NextResponse.json({ reference, beds24Id: beds24Result?.id ?? null, discount: discount ?? undefined });
   } catch (err) {
     if (err instanceof BookingBlockedError) {
       return NextResponse.json({ error: err.message, code: err.code }, { status: err.code === 'ROOM_NOT_FOUND' ? 404 : 409 });

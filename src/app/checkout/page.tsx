@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 
 
-const GHS_PER_USD = Number(process.env.NEXT_PUBLIC_GHS_PER_USD ?? '15.5');
+const DEFAULT_GHS_PER_USD = Number(process.env.NEXT_PUBLIC_GHS_PER_USD ?? '11.5');
 
 function CheckoutContent() {
   const router = useRouter();
@@ -20,9 +20,21 @@ function CheckoutContent() {
   const perNight = Number(params.get('perNight'));
   const roomName = params.get('roomName') ?? 'Room';
 
+  const [ghsPerUsd, setGhsPerUsd] = useState(DEFAULT_GHS_PER_USD);
   const nights = Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000);
-  const perNightUSD = Math.round(perNight / GHS_PER_USD);
+  const perNightUSD = Math.round(perNight / ghsPerUsd);
   const totalUSD = perNightUSD * nights;
+
+  useEffect(() => {
+    fetch('/api/exchange-rate')
+      .then((r) => r.json())
+      .then((d) => {
+        if (typeof d?.effectiveRate === 'number' && d.effectiveRate > 0) {
+          setGhsPerUsd(d.effectiveRate);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const HOLD_SECONDS = 30 * 60;
   const [secondsLeft, setSecondsLeft] = useState(HOLD_SECONDS);

@@ -1,4 +1,5 @@
 import type { Beds24Booking, RoomAvailability } from '@/types';
+import { getEffectiveExchangeRate } from '@/lib/exchange-rate';
 
 const BASE_URL = 'https://beds24.com/api/v2';
 
@@ -115,7 +116,7 @@ export async function getRoomOffers(
   if (!offer) return null;
 
   // Beds24 prices are in property currency (USD). Convert to GHS for Paystack.
-  const GHS_PER_USD = Number(process.env.GHS_PER_USD ?? '15.5');
+  const GHS_PER_USD = await getEffectiveExchangeRate();
   const priceUSD: number = offer.price ?? offer.totalPrice ?? 0;
   if (!priceUSD) return null;
 

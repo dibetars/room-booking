@@ -62,10 +62,22 @@ async function handleChargeSuccess(reference: string, webhookData: unknown) {
     return;
   }
 
-  // Mark PAID first, then confirm in Beds24
+  // Mark PAID first, then confirm in Beds24 (or confirm directly in direct mode)
   await updateIntentStatus(reference, 'PAID', { paystack_raw: verified, paystack_status: 'success' });
 
   if (!intent.beds24_booking_id) {
+    const isDirectMode =
+      typeof intent.beds24_raw === 'object' &&
+      intent.beds24_raw !== null &&
+      (intent.beds24_raw as { mode?: string }).mode === 'direct';
+
+    if (isDirectMode) {
+      await updateIntentStatus(reference, 'CONFIRMED');
+      sendDirectGuestEmail('booking_confirmed', intent);
+      sendDirectGuestEmail('payment_received', intent);
+      return;
+    }
+
     await updateIntentStatus(reference, 'RECONCILE_NEEDED');
     return;
   }

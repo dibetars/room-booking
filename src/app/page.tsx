@@ -8,8 +8,7 @@ import { getDiscount } from '@/lib/discounts';
 import BackgroundMusic from '@/components/BackgroundMusic';
 
 
-const GHS_PER_USD = Number(process.env.NEXT_PUBLIC_GHS_PER_USD ?? '15.5');
-const toGHS = (usd: number) => Math.round(usd * GHS_PER_USD);
+const DEFAULT_GHS_PER_USD = Number(process.env.NEXT_PUBLIC_GHS_PER_USD ?? '11.5');
 
 function todayStr() { return new Date().toISOString().slice(0, 10); }
 function tomorrowStr() {
@@ -64,6 +63,8 @@ export default function HomePage() {
   const [bookingError, setBookingError] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState<{ reference: string } | null>(null);
   const [paymentsEnabled, setPaymentsEnabled] = useState(true);
+  const [ghsPerUsd, setGhsPerUsd] = useState(DEFAULT_GHS_PER_USD);
+  const toGHS = (usd: number) => Math.round(usd * ghsPerUsd);
   const [bannerDismissed, setBannerDismissed] = useState(true); // start hidden, show after delay
   const [promoSlide, setPromoSlide] = useState(0);
   const [promoSlides, setPromoSlides] = useState<Array<{
@@ -85,7 +86,12 @@ export default function HomePage() {
   useEffect(() => {
     fetch('/api/settings')
       .then((r) => r.json())
-      .then((d) => setPaymentsEnabled(d.paymentsEnabled !== false))
+      .then((d) => {
+        setPaymentsEnabled(d.paymentsEnabled !== false);
+        if (typeof d.exchangeRate?.effectiveRate === 'number' && d.exchangeRate.effectiveRate > 0) {
+          setGhsPerUsd(d.exchangeRate.effectiveRate);
+        }
+      })
       .catch(() => {});
   }, []);
 

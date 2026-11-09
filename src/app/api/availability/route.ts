@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { roomsWithAvailability } from '@/lib/occupancy';
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
+import { getExchangeRateInfo } from '@/lib/exchange-rate';
 
 const schema = z.object({
   checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -46,9 +47,12 @@ export async function GET(req: NextRequest) {
 
   try {
     const guests = adults + children;
-    const { rooms: occupancy } = await roomsWithAvailability(checkIn, checkOut, guests);
+    const [{ rooms: occupancy }, fx] = await Promise.all([
+      roomsWithAvailability(checkIn, checkOut, guests),
+      getExchangeRateInfo(),
+    ]);
 
-    const GHS_PER_USD = Number(process.env.GHS_PER_USD ?? '15.5');
+    const GHS_PER_USD = fx.effectiveRate;
 
     const rooms = occupancy.map((room) => {
       if (!room.available) {
@@ -80,7 +84,7 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({ rooms, checkIn, checkOut, nights, adults, children });
+    return NextResponse.json({ rooms, checkIn, checkOut, nights, adults, children, exchangeRate: fx });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     if (message === 'BEDS24_RATE_LIMITED') {

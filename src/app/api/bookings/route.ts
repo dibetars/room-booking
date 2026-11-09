@@ -7,6 +7,8 @@ import { getClientIp, rateLimit } from '@/lib/rate-limit';
 import { getDiscount, applyDiscount } from '@/lib/discounts';
 import { assertRoomBookable, BookingBlockedError } from '@/lib/occupancy';
 import { sendDirectGuestEmail } from '@/lib/email';
+import { getEffectiveExchangeRate } from '@/lib/exchange-rate';
+import { getChannelMode } from '@/lib/ical';
 
 const schema = z.object({
   roomId: z.number().int().positive(),
@@ -61,12 +63,13 @@ export async function POST(req: NextRequest) {
     const nights = Math.round(
       (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000
     );
-    const GHS_PER_USD = Number(process.env.GHS_PER_USD ?? '15.5');
 
     const reference = generateReference();
-    const [paymentsEnabled, augustWeekendEnabled] = await Promise.all([
+    const [paymentsEnabled, augustWeekendEnabled, GHS_PER_USD, channelMode] = await Promise.all([
       getSetting<boolean>('payments_enabled', false),
       getSetting<boolean>('august_weekend_discount', true),
+      getEffectiveExchangeRate(),
+      getChannelMode(),
     ]);
 
     const discount = getDiscount(checkIn, checkOut, { augustWeekendEnabled });
@@ -81,26 +84,29 @@ export async function POST(req: NextRequest) {
     const discountInfo = discount ? ` [${discount.code} -${discount.discountPct}%]` : '';
 
     if (!paymentsEnabled) {
-      const beds24Result = await createBooking({
-        roomId,
-        arrival: checkIn,
-        departure: checkOut,
-        numAdult: adults,
-        numChild: children,
-        firstName,
-        lastName,
-        email: guest.email,
-        phone: guest.phone,
-        status: 'new',
-        price: priceUSD,
-        referer: 'BokoBoko Direct',
-        info: `Ref: ${reference} — manual payment (Paystack disabled)${discountInfo}`,
-      });
+      const beds24Result =
+        channelMode === 'direct'
+          ? null
+          : await createBooking({
+              roomId,
+              arrival: checkIn,
+              departure: checkOut,
+              numAdult: adults,
+              numChild: children,
+              firstName,
+              lastName,
+              email: guest.email,
+              phone: guest.phone,
+              status: 'new',
+              price: priceUSD,
+              referer: 'BokoBoko Direct',
+              info: `Ref: ${reference} — manual payment (Paystack disabled)${discountInfo}`,
+            });
 
       const intent = await createIntent({
         reference,
         status: 'PAYMENT_PENDING',
-        beds24_booking_id: beds24Result.id,
+        beds24_booking_id: beds24Result?.id ?? null,
         room_id: roomId,
         check_in: checkIn,
         check_out: checkOut,
@@ -113,7 +119,7 @@ export async function POST(req: NextRequest) {
         currency: 'GHS',
         paystack_status: 'manual',
         expires_at: null,
-        beds24_raw: beds24Result,
+        beds24_raw: beds24Result ?? { mode: 'direct' },
         paystack_raw: { source: 'manual_mode' },
       });
 
@@ -124,26 +130,29 @@ export async function POST(req: NextRequest) {
 
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
-    const beds24Result = await createBooking({
-      roomId,
-      arrival: checkIn,
-      departure: checkOut,
-      numAdult: adults,
-      numChild: children,
-      firstName,
-      lastName,
-      email: guest.email,
-      phone: guest.phone,
-      status: 'request',
-      price: priceUSD,
-      referer: 'BokoBoko Direct',
-      info: `Ref: ${reference}${discountInfo}`,
-    });
+    const beds24Result =
+      channelMode === 'direct'
+        ? null
+        : await createBooking({
+            roomId,
+            arrival: checkIn,
+            departure: checkOut,
+            numAdult: adults,
+            numChild: children,
+            firstName,
+            lastName,
+            email: guest.email,
+            phone: guest.phone,
+            status: 'request',
+            price: priceUSD,
+            referer: 'BokoBoko Direct',
+            info: `Ref: ${reference}${discountInfo}`,
+          });
 
     await createIntent({
       reference,
       status: 'HELD',
-      beds24_booking_id: beds24Result.id,
+      beds24_booking_id: beds24Result?.id ?? null,
       room_id: roomId,
       check_in: checkIn,
       check_out: checkOut,
@@ -156,7 +165,7 @@ export async function POST(req: NextRequest) {
       currency: 'GHS',
       paystack_status: null,
       expires_at: expiresAt,
-      beds24_raw: beds24Result,
+      beds24_raw: beds24Result ?? { mode: 'direct' },
       paystack_raw: null,
     });
 

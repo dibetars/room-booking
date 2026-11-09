@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import type { RoomAvailability } from '@/types';
 
-const GHS_PER_USD = Number(process.env.NEXT_PUBLIC_GHS_PER_USD ?? '15.5');
+const DEFAULT_GHS_PER_USD = Number(process.env.NEXT_PUBLIC_GHS_PER_USD ?? '11.5');
 
 function RoomsContent() {
   const router = useRouter();
@@ -17,6 +17,7 @@ function RoomsContent() {
   const children = params.get('children') ?? '0';
 
   const [rooms, setRooms] = useState<RoomAvailability[]>([]);
+  const [ghsPerUsd, setGhsPerUsd] = useState(DEFAULT_GHS_PER_USD);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const nights = Math.round(
@@ -29,7 +30,12 @@ function RoomsContent() {
       .then((r) => r.json())
       .then((data) => {
         if (data.error) setError(data.error);
-        else setRooms(data.rooms);
+        else {
+          setRooms(data.rooms);
+          if (typeof data.exchangeRate?.effectiveRate === 'number' && data.exchangeRate.effectiveRate > 0) {
+            setGhsPerUsd(data.exchangeRate.effectiveRate);
+          }
+        }
       })
       .catch(() => setError('Failed to load availability. Please try again.'))
       .finally(() => setLoading(false));
@@ -77,7 +83,7 @@ function RoomsContent() {
 
         <div className="space-y-4">
           {rooms.filter((r) => r.available).map((room) => {
-            const perNightUSD = Math.round(room.perNight / GHS_PER_USD);
+            const perNightUSD = Math.round(room.perNight / ghsPerUsd);
             const totalUSD = perNightUSD * nights;
             const photo = room.photos?.[0];
             return (

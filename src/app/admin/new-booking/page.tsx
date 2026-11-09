@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ROOMS } from '@/lib/rooms';
 import { getDiscount, applyDiscount } from '@/lib/discounts';
@@ -31,12 +31,23 @@ export default function NewBookingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [GHS_PER_USD, setGhsPerUsd] = useState(Number(process.env.NEXT_PUBLIC_GHS_PER_USD ?? '11.5'));
+
+  useEffect(() => {
+    fetch('/api/exchange-rate')
+      .then((r) => r.json())
+      .then((d) => {
+        if (typeof d?.effectiveRate === 'number' && d.effectiveRate > 0) {
+          setGhsPerUsd(d.effectiveRate);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const room = ROOMS.find((r) => r.id === Number(form.roomId)) ?? ROOMS[0];
   const nights = Math.max(1, Math.round(
     (new Date(form.checkOut).getTime() - new Date(form.checkIn).getTime()) / 86400000
   ));
-  const GHS_PER_USD = Number(process.env.NEXT_PUBLIC_GHS_PER_USD ?? '15.5');
   const rackTotal = room.rackRateUSD * nights;
   const discount = getDiscount(form.checkIn, form.checkOut);
   const autoPrice = applyDiscount(rackTotal, discount).toFixed(2);
