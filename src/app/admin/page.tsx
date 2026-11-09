@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { BookingIntent } from '@/types';
+import type { ExchangeRateInfo } from '@/lib/exchange-rate';
 
 interface AdminBooking {
   id?: number;
@@ -143,6 +144,7 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [channelFilter, setChannelFilter] = useState('all');
   const [reportAlert, setReportAlert] = useState<{ period: string; generated: boolean } | null>(null);
+  const [fx, setFx] = useState<ExchangeRateInfo | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [draft, setDraft] = useState<FilterDraft>({
     dateFrom: initialMonth.from,
@@ -209,7 +211,7 @@ export default function AdminDashboard() {
     setShowFilters(false);
   }
 
-  // Auto-generate last month's report on dashboard load (once per month)
+  // Auto-generate last month's report on dashboard load (once per month) & load active FX rate
   useEffect(() => {
     const STORAGE_KEY = 'report_alert_dismissed';
     fetch('/api/admin/reports?check=prev')
@@ -220,6 +222,11 @@ export default function AdminDashboard() {
         if (dismissed === d.period) return; // already dismissed this month's alert
         setReportAlert({ period: d.period, generated: d.generated ?? false });
       })
+      .catch(() => {});
+
+    fetch('/api/exchange-rate')
+      .then(r => r.json())
+      .then(d => { if (d?.effectiveRate) setFx(d); })
       .catch(() => {});
   }, []);
 
@@ -329,7 +336,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: "Today's Arrivals", value: todayArrivals.length, color: 'text-[#2d5a27]' },
             { label: "Today's Departures", value: todayDepartures.length, color: 'text-[#BE6A45]' },
@@ -340,6 +347,27 @@ export default function AdminDashboard() {
               <p className="text-xs text-gray-500 mt-0.5">{label}</p>
             </div>
           ))}
+          <a
+            href="/admin/settings"
+            className="bg-white rounded-xl shadow p-4 text-center hover:bg-gray-50 transition-colors block"
+            title="View exchange rate settings"
+          >
+            <p className="text-2xl font-bold text-[#2d5a27]">
+              {fx ? `GH₵ ${fx.effectiveRate.toFixed(2)}` : '…'}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Active USD → GHS Rate
+            </p>
+            {fx && (
+              <p className="text-[11px] text-gray-400 mt-1">
+                {fx.source === 'fixed_30d'
+                  ? `30d lock until ${fx.fixedUntil} · Spot ${fx.spotRate.toFixed(2)} · 30d avg ${fx.historical30dAvg.toFixed(2)}`
+                  : fx.droppedBelowHistorical
+                    ? `Spot ${fx.spotRate.toFixed(2)} < 30d avg ${fx.historical30dAvg.toFixed(2)} (+${fx.markupPct}%)`
+                    : `Spot ${fx.spotRate.toFixed(2)} ≥ 30d avg ${fx.historical30dAvg.toFixed(2)} (0% markup)`}
+              </p>
+            )}
+          </a>
         </div>
 
         {/* Toolbar */}
