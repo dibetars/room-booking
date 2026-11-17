@@ -117,7 +117,9 @@ export default function NewBookingPage() {
               <label className={LABEL}>Room</label>
               <select value={form.roomId} onChange={(e) => set('roomId', e.target.value)} className={INPUT}>
                 {ROOMS.map((r) => (
-                  <option key={r.id} value={r.id}>{r.name} — ${r.rackRateUSD}/night</option>
+                  <option key={r.id} value={r.id}>
+                    {r.name} — ${r.rackRateUSD}/night (GH₵ {Math.round(r.rackRateUSD * GHS_PER_USD).toLocaleString('en-GH')})
+                  </option>
                 ))}
               </select>
             </div>
@@ -201,10 +203,19 @@ export default function NewBookingPage() {
               </div>
             )}
             <div className="border-t border-white/15 pt-3 flex items-center justify-between">
-              <span className="text-white/70 text-sm">Total</span>
+              <span className="text-white/70 text-sm">Total (USD)</span>
               <div className="text-right">
                 {discount && <p className="text-white/40 text-xs line-through">${rackTotal.toFixed(2)}</p>}
-                <span className="text-xl font-bold text-[#BE6A45]">${autoPrice}</span>
+                <span className="text-lg font-bold text-white/90">${autoPrice}</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-white/70 text-sm">Guest pays (GHS)</span>
+              <div className="text-right">
+                <span className="text-xl font-bold text-[#BE6A45]">
+                  GH₵ {Math.round((form.priceOverride ? Number(form.priceOverride) : Number(autoPrice)) * GHS_PER_USD).toLocaleString('en-GH')}
+                </span>
+                <p className="text-[11px] text-white/40 mt-0.5">rate GH₵ {GHS_PER_USD.toFixed(2)} / $1</p>
               </div>
             </div>
           </div>

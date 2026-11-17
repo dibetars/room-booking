@@ -188,11 +188,20 @@ export default function HomePage() {
 
   const nights = Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000);
   const fmt = (d: string) => new Date(d).toLocaleDateString('en-GH', { weekday: 'short', month: 'short', day: 'numeric' });
+  const fmtGHS = (n: number) => `GH₵ ${Math.round(n).toLocaleString('en-GH')}`;
   const activeDiscount = selectedRoom ? getDiscount(checkIn, checkOut) : null;
-  const discountedTotal = selectedRoom
+  const discountedTotalUSD = selectedRoom
     ? activeDiscount
       ? Math.round(selectedRoom.rackRateUSD * nights * (1 - activeDiscount.discountPct / 100) * 100) / 100
       : selectedRoom.rackRateUSD * nights
+    : 0;
+  const rackTotalGHS = selectedRoom
+    ? (selectedRoom.totalPriceGHS || toGHS(selectedRoom.rackRateUSD * nights))
+    : 0;
+  const discountedTotalGHS = selectedRoom
+    ? activeDiscount
+      ? Math.round(rackTotalGHS * (1 - activeDiscount.discountPct / 100))
+      : rackTotalGHS
     : 0;
 
   return (
@@ -501,8 +510,8 @@ export default function HomePage() {
               {results !== null && results.filter(r => r.available).length > 0 && (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {results.filter(r => r.available).map(room => {
-                    const perNightUSD = room.rackRateUSD;
-                    const totalUSD = room.rackRateUSD * nights;
+                    const perNightGHS = room.perNight || toGHS(room.rackRateUSD);
+                    const totalGHS = room.totalPriceGHS || perNightGHS * nights;
                     return (
                       <div key={room.roomId} className="bg-[#f9f9f9] rounded-2xl overflow-hidden flex flex-col">
                         <div className="aspect-[4/3] relative">
@@ -514,11 +523,14 @@ export default function HomePage() {
                           <p className="text-xs text-gray-400 mb-2">Up to {room.maxOccupancy} guests</p>
                           <div className="mb-3">
                             <div className="flex items-baseline gap-1.5">
-                              <span className="text-lg font-bold text-[#BE6A45]">${perNightUSD}</span>
+                              <span className="text-lg font-bold text-[#BE6A45]">{fmtGHS(perNightGHS)}</span>
                               <span className="text-gray-400 text-xs">/ night</span>
                             </div>
                             <p className="text-xs font-semibold text-gray-700 mt-0.5">
-                              Total: ${totalUSD}
+                              Total: {fmtGHS(totalGHS)}
+                            </p>
+                            <p className="text-[11px] text-gray-400 mt-0.5">
+                              ${room.rackRateUSD}/night · ${room.rackRateUSD * nights} total
                             </p>
                           </div>
                           <button onClick={() => { setSelectedRoom(room); setBookingError(''); }}
@@ -575,23 +587,32 @@ export default function HomePage() {
                     <p className="font-semibold text-gray-800">{selectedRoom.name}</p>
                     <p className="text-sm text-gray-500">{fmt(checkIn)} → {fmt(checkOut)} · {nights} night{nights !== 1 ? 's' : ''}</p>
                     <div className="flex justify-between items-baseline mt-2">
-                      <span className="text-sm text-gray-500">${selectedRoom.rackRateUSD} × {nights} night{nights !== 1 ? 's' : ''}</span>
+                      <span className="text-sm text-gray-500">{fmtGHS(selectedRoom.perNight || toGHS(selectedRoom.rackRateUSD))} × {nights} night{nights !== 1 ? 's' : ''}</span>
                       <span className={activeDiscount ? 'text-sm text-gray-400 line-through' : 'font-bold text-[#BE6A45]'}>
-                        ${selectedRoom.rackRateUSD * nights}
+                        {fmtGHS(rackTotalGHS)}
                       </span>
                     </div>
                     {activeDiscount && (
                       <>
                         <div className="flex justify-between items-baseline">
                           <span className="text-sm text-amber-700 font-semibold">🏷 {activeDiscount.label}</span>
-                          <span className="text-sm text-amber-700 font-semibold">−${(selectedRoom.rackRateUSD * nights - discountedTotal).toFixed(2)}</span>
+                          <span className="text-sm text-amber-700 font-semibold">−{fmtGHS(rackTotalGHS - discountedTotalGHS)}</span>
                         </div>
                         <div className="flex justify-between items-baseline pt-1 border-t border-[#e8dfd0]">
-                          <span className="text-sm font-semibold text-gray-700">Total</span>
-                          <span className="font-bold text-[#BE6A45] text-lg">${discountedTotal}</span>
+                          <span className="text-sm font-semibold text-gray-700">You pay</span>
+                          <span className="font-bold text-[#BE6A45] text-lg">{fmtGHS(discountedTotalGHS)}</span>
                         </div>
                       </>
                     )}
+                    {!activeDiscount && (
+                      <div className="flex justify-between items-baseline pt-1 border-t border-[#e8dfd0]">
+                        <span className="text-sm font-semibold text-gray-700">You pay</span>
+                        <span className="font-bold text-[#BE6A45] text-lg">{fmtGHS(discountedTotalGHS)}</span>
+                      </div>
+                    )}
+                    <p className="text-[11px] text-gray-400 pt-1">
+                      ≈ ${discountedTotalUSD} USD · rate GH₵ {ghsPerUsd.toFixed(2)} / $1
+                    </p>
                   </div>
 
                   {/* Guest form */}
@@ -635,10 +656,14 @@ export default function HomePage() {
                     <button type="submit" disabled={submitting}
                       className="w-full bg-[#BE6A45] hover:bg-[#a85a38] text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-60">
                       {paymentsEnabled
-                        ? (submitting ? 'Opening payment…' : `Pay $${discountedTotal}`)
+                        ? (submitting ? 'Opening payment…' : `Pay ${fmtGHS(discountedTotalGHS)}`)
                         : (submitting ? 'Sending request…' : 'Request to Book')}
                     </button>
-                    {paymentsEnabled && <p className="text-xs text-gray-400 text-center">Secure payment powered by Paystack.</p>}
+                    {paymentsEnabled && (
+                      <p className="text-xs text-gray-400 text-center">
+                        Secure payment powered by Paystack. Charged in Ghana Cedis (GHS).
+                      </p>
+                    )}
                   </form>
                 </>
               )}
@@ -686,9 +711,12 @@ export default function HomePage() {
                   <p className="text-xs text-[#BE6A45] font-semibold uppercase tracking-wide mb-1">{names}</p>
                   <h3 className="text-xl font-bold text-[#333] mb-2">{title}</h3>
                   <p className="text-gray-500 text-sm leading-relaxed mb-4 flex-1">{desc}</p>
-                  <div className="flex items-baseline gap-2 mb-4">
-                    <span className="text-2xl font-bold text-[#BE6A45]">${usd}</span>
-                    <span className="text-gray-400 text-sm">/ night</span>
+                  <div className="mb-4">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-bold text-[#BE6A45]">{fmtGHS(toGHS(usd))}</span>
+                      <span className="text-gray-400 text-sm">/ night</span>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5">${usd} USD / night</p>
                   </div>
                   <button onClick={() => setShowSearchModal(true)} className="w-full bg-black text-white font-semibold px-5 py-2.5 rounded-full hover:bg-[#BE6A45] transition-colors">
                     Book Now

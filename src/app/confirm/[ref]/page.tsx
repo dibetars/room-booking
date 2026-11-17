@@ -123,7 +123,7 @@ export default function ConfirmPage({ params }: { params: Promise<{ ref: string 
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Total paid</span>
-            <span className="font-semibold text-[#2d5a27]">GHS {data.amountGHS.toLocaleString()}</span>
+            <span className="font-semibold text-[#2d5a27]">GH₵ {data.amountGHS.toLocaleString('en-GH')}</span>
           </div>
         </div>
 

@@ -101,9 +101,12 @@ function RoomsContent() {
                   </div>
                   <div className="flex items-end justify-between mt-auto pt-2">
                     <div>
-                      <p className="text-2xl font-bold text-[#2d5a27]">GHS {room.totalPriceGHS.toLocaleString()}</p>
+                      <p className="text-2xl font-bold text-[#2d5a27]">GH₵ {room.totalPriceGHS.toLocaleString('en-GH')}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        You pay GH₵ {room.totalPriceGHS.toLocaleString('en-GH')} total
+                      </p>
                       <p className="text-xs text-gray-400">
-                        GHS {room.perNight.toLocaleString()} / night · <span className="text-gray-500">${perNightUSD} / night · ${totalUSD} total</span>
+                        GH₵ {room.perNight.toLocaleString('en-GH')} / night · ${perNightUSD}/night · ${totalUSD} USD
                       </p>
                     </div>
                     <button

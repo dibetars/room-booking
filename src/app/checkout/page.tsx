@@ -126,10 +126,20 @@ function CheckoutContent() {
               {adults} adult{Number(adults) !== 1 ? 's' : ''}{Number(children) > 0 ? `, ${children} child${Number(children) !== 1 ? 'ren' : ''}` : ''}
             </p>
             <div className="border-t pt-2 space-y-1">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">${perNightUSD} / night × {nights} night{nights !== 1 ? 's' : ''}</span>
-                <span className="font-bold text-[#2d5a27]">${totalUSD}</span>
+              <div className="flex justify-between items-baseline">
+                <span className="text-sm text-gray-500">
+                  GH₵ {perNight.toLocaleString('en-GH')} / night × {nights} night{nights !== 1 ? 's' : ''}
+                </span>
+                <span className="font-bold text-[#2d5a27] text-lg">
+                  GH₵ {totalPriceGHS.toLocaleString('en-GH')}
+                </span>
               </div>
+              <p className="text-xs text-gray-400 text-right">
+                ≈ ${totalUSD} USD · ${perNightUSD}/night · rate GH₵ {ghsPerUsd.toFixed(2)} / $1
+              </p>
+              <p className="text-sm font-semibold text-gray-700 pt-1 border-t">
+                You pay: <span className="text-[#2d5a27]">GH₵ {totalPriceGHS.toLocaleString('en-GH')}</span>
+              </p>
             </div>
           </div>
 
@@ -170,11 +180,11 @@ function CheckoutContent() {
 
             <button type="submit" disabled={submitting}
               className="w-full bg-[#2d5a27] text-white font-semibold py-3 rounded-xl hover:bg-[#245020] transition-colors disabled:opacity-60">
-              {submitting ? 'Opening payment…' : `Pay $${totalUSD}`}
+              {submitting ? 'Opening payment…' : `Pay GH₵ ${totalPriceGHS.toLocaleString('en-GH')}`}
             </button>
 
             <p className="text-xs text-gray-400 text-center">
-              Secure payment powered by Paystack. Prices in USD.
+              Secure payment powered by Paystack. Charged in Ghana Cedis (GHS).
             </p>
           </form>
         </div>

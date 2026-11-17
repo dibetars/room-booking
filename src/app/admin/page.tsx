@@ -260,6 +260,9 @@ export default function AdminDashboard() {
       'Payment Status': b.intent?.status ?? '',
       'Reference': b.intent?.reference ?? '',
       'Price (USD)': b.price ?? '',
+      'Amount (GHS)': b.intent?.amount_pesewas != null
+        ? (b.intent.amount_pesewas / 100)
+        : (b.price != null && fx ? Math.round(b.price * fx.effectiveRate) : ''),
     }));
     const headers = Object.keys(rows[0]);
     const csv = [
@@ -606,8 +609,18 @@ export default function AdminDashboard() {
               {/* Price & reference */}
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Price</p>
-                  <p className="font-semibold text-gray-800">{b.price != null ? `$${b.price}` : '—'}</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Guest pays (GHS)</p>
+                  <p className="font-semibold text-[#2d5a27] text-base">
+                    {b.intent?.amount_pesewas != null
+                      ? `GH₵ ${(b.intent.amount_pesewas / 100).toLocaleString('en-GH')}`
+                      : b.price != null && fx
+                        ? `GH₵ ${Math.round(b.price * fx.effectiveRate).toLocaleString('en-GH')}`
+                        : '—'}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {b.price != null ? `$${b.price} USD` : ''}
+                    {fx ? ` · rate GH₵ ${fx.effectiveRate.toFixed(2)} / $1` : ''}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Reference</p>
