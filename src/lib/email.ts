@@ -142,3 +142,89 @@ export async function sendAdminOtpEmail(to: string, code: string): Promise<boole
     return false;
   }
 }
+
+export interface RateChangeAlert {
+  roomId: number;
+  roomName: string;
+  previousRateUSD: number;
+  newRateUSD: number;
+  maxOccupancy: number;
+  description: string;
+}
+
+/**
+ * Notify ops when website rack rates change so Airbnb + Booking.com can be updated manually.
+ * Fire-and-forget — never throws.
+ */
+export function sendRateChangeAlertEmail(change: RateChangeAlert): void {
+  void sendRateChangeAlertEmailAsync(change);
+}
+
+async function sendRateChangeAlertEmailAsync(change: RateChangeAlert): Promise<void> {
+  const cfg = configured();
+  if (!cfg) {
+    console.warn('[email] rate-change alert skipped — Resend not configured');
+    return;
+  }
+
+  const to = process.env.RATE_CHANGE_NOTIFY_EMAIL?.trim() || 'dibe@tarsusstudios.com';
+  const when = new Date().toLocaleString('en-GH', { timeZone: 'Africa/Accra' });
+  const delta = change.newRateUSD - change.previousRateUSD;
+  const deltaLabel = `${delta >= 0 ? '+' : ''}${delta.toFixed(2)}`;
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 560px; margin: 0 auto; color: #333;">
+      <h2 style="color: #2d5a27; margin-bottom: 8px;">Website room rate changed</h2>
+      <p style="color: #666; font-size: 14px; margin-top: 0;">
+        Please update the matching nightly rate on <strong>Airbnb</strong> and <strong>Booking.com</strong>.
+        (iCal only syncs calendars — OTA prices must be updated manually.)
+      </p>
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+        <tr>
+          <td style="padding: 8px 0; color: #666;">Room</td>
+          <td style="padding: 8px 0; font-weight: 600;">${change.roomName} (#${change.roomId})</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #666;">Previous rate</td>
+          <td style="padding: 8px 0;">$${change.previousRateUSD.toFixed(2)} / night</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #666;">New rate</td>
+          <td style="padding: 8px 0; font-weight: 700; color: #2d5a27;">$${change.newRateUSD.toFixed(2)} / night (${deltaLabel})</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #666;">Max occupancy</td>
+          <td style="padding: 8px 0;">${change.maxOccupancy} guests</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #666;">Changed at</td>
+          <td style="padding: 8px 0;">${when} (Accra)</td>
+        </tr>
+      </table>
+      <div style="background: #f5f0e8; border-radius: 10px; padding: 14px; font-size: 13px; color: #555;">
+        <strong>Action checklist</strong>
+        <ol style="margin: 8px 0 0; padding-left: 18px;">
+          <li>Update Airbnb listing pricing for <em>${change.roomName}</em> to <strong>$${change.newRateUSD.toFixed(2)}</strong>/night.</li>
+          <li>Update Booking.com Extranet rate for the matching room type to <strong>$${change.newRateUSD.toFixed(2)}</strong>/night.</li>
+          <li>Confirm both calendars still sync correctly.</li>
+        </ol>
+      </div>
+      <p style="font-size: 12px; color: #999; margin-top: 20px;">BokoBoko Admin · book.bokoboko.org</p>
+    </div>
+  `.trim();
+
+  try {
+    const { error } = await cfg.resend.emails.send({
+      from: cfg.from,
+      to,
+      subject: `[BokoBoko] Rate change: ${change.roomName} $${change.previousRateUSD} → $${change.newRateUSD}`,
+      html,
+      replyTo: cfg.replyTo,
+    });
+    if (error) {
+      console.error('[email] rate-change Resend error', error);
+    }
+  } catch (err) {
+    console.error('[email] rate-change send failed', err);
+  }
+}

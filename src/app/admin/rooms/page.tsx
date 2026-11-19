@@ -51,12 +51,15 @@ export default function RoomsPage() {
 
   const maxRevenue = Math.max(...perf.map((r) => r.revenue), 1);
 
+  const [saveNote, setSaveNote] = useState('');
+
   async function saveRoom(e: React.FormEvent) {
     e.preventDefault();
     if (!editing) return;
     setSaving(true);
     setSaveError('');
     setSaveOk(false);
+    setSaveNote('');
     const res = await fetch('/api/admin/rooms', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -72,8 +75,11 @@ export default function RoomsPage() {
     setSaving(false);
     if (!res.ok) { setSaveError(data.error ?? 'Save failed'); return; }
     setSaveOk(true);
+    if (data.rateChangeNotified) {
+      setSaveNote('Rate change emailed to dibe@tarsusstudios.com — update Airbnb & Booking.com next.');
+    }
     setRooms((prev) => prev.map((r) => r.id === editing.id ? { ...r, ...editing } : r));
-    setTimeout(() => { setEditing(null); setSaveOk(false); }, 800);
+    setTimeout(() => { setEditing(null); setSaveOk(false); setSaveNote(''); }, data.rateChangeNotified ? 2200 : 800);
   }
 
   return (
@@ -202,6 +208,9 @@ export default function RoomsPage() {
                   <input type="number" step="0.01" min="1" value={editing.rackRateUSD} required
                     onChange={(e) => setEditing({ ...editing, rackRateUSD: Number(e.target.value) })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#2d5a27]" />
+                  <p className="text-[11px] text-amber-700 mt-1.5 leading-snug">
+                    Changing this updates the website price only. An email is sent to <strong>dibe@tarsusstudios.com</strong> so Airbnb &amp; Booking.com can be updated manually.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Max Occupancy</label>
@@ -211,7 +220,12 @@ export default function RoomsPage() {
                 </div>
               </div>
               {saveError && <p className="text-red-600 text-sm">{saveError}</p>}
-              {saveOk && <p className="text-green-600 text-sm font-medium">Saved!</p>}
+              {saveOk && (
+                <div className="space-y-1">
+                  <p className="text-green-600 text-sm font-medium">Saved!</p>
+                  {saveNote && <p className="text-amber-700 text-xs">{saveNote}</p>}
+                </div>
+              )}
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => setEditing(null)}
                   className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg hover:bg-gray-50 transition-colors">

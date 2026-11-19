@@ -12,8 +12,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { upsertRoomOverride } from '@/lib/supabase';
-import { getEffectiveRooms } from '@/lib/rooms-server';
+import { getEffectiveRoom, getEffectiveRooms } from '@/lib/rooms-server';
 import { withCache, invalidate } from '@/lib/server-cache';
+import { sendRateChangeAlertEmail } from '@/lib/email';
 
 const ROOMS_TTL = 10 * 60 * 1000; // 10 minutes
 
@@ -40,9 +41,28 @@ export async function PUT(req: NextRequest) {
   const { id, name, description, maxOccupancy, rackRateUSD } = parsed.data;
 
   try {
+    const previous = await getEffectiveRoom(id);
+    const previousRateUSD = previous?.rackRateUSD ?? rackRateUSD;
+
     await upsertRoomOverride({ room_id: id, name, description, max_occupancy: maxOccupancy, rack_rate_usd: rackRateUSD });
     invalidate('rooms:');
-    return NextResponse.json({ ok: true });
+
+    // Email ops when the rack rate changes so Airbnb + Booking.com can be updated manually
+    if (previous && Math.abs(previousRateUSD - rackRateUSD) >= 0.01) {
+      sendRateChangeAlertEmail({
+        roomId: id,
+        roomName: name,
+        previousRateUSD,
+        newRateUSD: rackRateUSD,
+        maxOccupancy,
+        description,
+      });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      rateChangeNotified: previous ? Math.abs(previousRateUSD - rackRateUSD) >= 0.01 : false,
+    });
   } catch (err) {
     console.error('[rooms PUT]', err);
     return NextResponse.json({ error: 'Save failed — ensure room_overrides table exists in Supabase.' }, { status: 500 });
