@@ -1,5 +1,4 @@
-import { checkAvailability } from '@/lib/beds24';
-import { checkDirectAvailability, getChannelMode } from '@/lib/ical';
+import { checkDirectAvailability } from '@/lib/ical';
 import { getEffectiveRoom, getEffectiveRooms } from '@/lib/rooms-server';
 import type { RoomConfig } from '@/lib/rooms';
 
@@ -30,27 +29,13 @@ async function resolveRoomAvailability(
   checkIn: string,
   checkOut: string
 ): Promise<{ roomId: number; available: boolean }[]> {
-  const [mode, directRows] = await Promise.all([
-    getChannelMode(),
-    checkDirectAvailability(roomIds, checkIn, checkOut),
-  ]);
-
-  if (mode === 'direct') {
-    return directRows;
-  }
-
-  const beds24Rows = await checkAvailability(roomIds, checkIn, checkOut);
-  const directMap = new Map(directRows.map((r) => [r.roomId, r.available]));
-
-  return beds24Rows.map((row) => ({
-    roomId: row.roomId,
-    available: row.available && (directMap.get(row.roomId) ?? true),
-  }));
+  // Source of truth: local booking_intents (incl. Beds24 archive import) + iCal feeds.
+  return checkDirectAvailability(roomIds, checkIn, checkOut);
 }
 
 /**
  * Checks whether a room has remaining availability on the date range
- * (via Beds24 + local/iCal in 'beds24' mode, or 100% via Supabase + iCal in 'direct' mode).
+ * via Supabase booking intents (archive + website) and synced iCal events.
  */
 export async function assertRoomBookable(opts: {
   roomId: number;

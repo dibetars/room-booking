@@ -160,7 +160,7 @@ interface RoomChannelRow {
 }
 
 function DirectChannelsSection() {
-  const [channelMode, setChannelMode] = useState<'beds24' | 'direct'>('beds24');
+  const [channelMode, setChannelMode] = useState<'beds24' | 'direct'>('direct');
   const [rooms, setRooms] = useState<RoomChannelRow[]>([]);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -260,7 +260,7 @@ function DirectChannelsSection() {
             </span>
           </div>
           <p className="text-sm text-gray-500 mt-1 max-w-xl">
-            Paste each room&apos;s export link into Airbnb &amp; Booking.com, and paste their calendar links below. When you are ready to turn off Beds24 completely, switch the mode to <strong>Direct (No Beds24)</strong>.
+            Bookings now come from the archived Beds24 export plus local website/admin reservations. Keep Airbnb &amp; Booking.com in sync with the iCal links below. Direct mode should stay on.
           </p>
         </div>
 

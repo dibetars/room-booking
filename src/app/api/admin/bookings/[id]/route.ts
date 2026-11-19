@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateBookingStatus } from '@/lib/beds24';
 import { getAllBookingIntentsInWindow, getIntentByBeds24Id, getIntentByRef, updateIntentStatus } from '@/lib/supabase';
-import { getChannelMode } from '@/lib/ical';
 import { invalidate } from '@/lib/server-cache';
 import { sendDirectGuestEmail } from '@/lib/email';
 
@@ -29,7 +27,6 @@ export async function PUT(
   const { action, reference } = await req.json().catch(() => ({}));
   if (!action) return NextResponse.json({ error: 'action required' }, { status: 400 });
 
-  const mode = await getChannelMode();
   let intent = reference
     ? await getIntentByRef(String(reference))
     : numericId
@@ -41,39 +38,29 @@ export async function PUT(
     intent = allIntents.find((i) => stableNumericId(i.reference) === numericId) ?? null;
   }
 
-  const hasBeds24Booking = Boolean(intent?.beds24_booking_id ?? (mode === 'beds24' && numericId));
-  const beds24Id = intent?.beds24_booking_id ?? numericId;
+  if (!intent) {
+    return NextResponse.json({ error: 'Booking not found in local store' }, { status: 404 });
+  }
 
   if (action === 'cancel') {
-    if (hasBeds24Booking && mode === 'beds24' && beds24Id) {
-      await updateBookingStatus(beds24Id, 'cancelled');
-    }
-    if (intent) await updateIntentStatus(intent.reference, 'CANCELLED');
+    await updateIntentStatus(intent.reference, 'CANCELLED');
     sendDirectGuestEmail('booking_cancelled', intent);
     invalidateCaches();
     return NextResponse.json({ ok: true });
   }
 
   if (action === 'confirm') {
-    if (hasBeds24Booking && mode === 'beds24' && beds24Id) {
-      await updateBookingStatus(beds24Id, 'confirmed');
-    }
-    if (intent) await updateIntentStatus(intent.reference, 'CONFIRMED');
+    await updateIntentStatus(intent.reference, 'CONFIRMED');
     sendDirectGuestEmail('booking_confirmed', intent);
     invalidateCaches();
     return NextResponse.json({ ok: true });
   }
 
   if (action === 'mark_paid') {
-    if (hasBeds24Booking && mode === 'beds24' && beds24Id) {
-      await updateBookingStatus(beds24Id, 'confirmed');
-    }
-    if (intent) {
-      await updateIntentStatus(intent.reference, 'CONFIRMED', {
-        paystack_status: 'manual',
-        paystack_raw: { source: 'admin_mark_paid' },
-      });
-    }
+    await updateIntentStatus(intent.reference, 'CONFIRMED', {
+      paystack_status: 'manual',
+      paystack_raw: { source: 'admin_mark_paid' },
+    });
     sendDirectGuestEmail('booking_confirmed', intent);
     sendDirectGuestEmail('payment_received', intent);
     invalidateCaches();

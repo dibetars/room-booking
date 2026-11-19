@@ -1,5 +1,4 @@
-import { getBookings } from '@/lib/beds24';
-import { getChannelMode, getDirectBookingsWithIntents } from '@/lib/ical';
+import { getStoreBookings } from '@/lib/ical';
 import { getSetting, setSetting, listSettingsByPrefix } from '@/lib/supabase';
 import { getEffectiveExchangeRate } from '@/lib/exchange-rate';
 
@@ -70,14 +69,10 @@ function aggregate(items: string[], revenues: number[]): ReportEntry[] {
 }
 
 export async function generateReport(dateFrom: string, dateTo: string, period: string): Promise<MonthlyReport> {
-  const mode = await getChannelMode();
   const [all, GHS_PER_USD] = await Promise.all([
-    mode === 'direct'
-      ? getDirectBookingsWithIntents({ from: dateFrom, to: dateTo })
-      : getBookings({ arrivalFrom: dateFrom, arrivalTo: dateTo }),
+    getStoreBookings({ from: dateFrom, to: dateTo }),
     getEffectiveExchangeRate(),
   ]);
-  // Belt-and-braces: Beds24 now filters server-side, so this should be a no-op.
   const bookings = all.filter(b => b.arrival >= dateFrom && b.arrival <= dateTo);
 
   const channels: string[] = [];

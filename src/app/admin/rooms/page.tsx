@@ -92,7 +92,7 @@ export default function RoomsPage() {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <h2 className="font-bold text-gray-800">Availability &amp; occupancy</h2>
               <p className="text-sm text-gray-500 mt-1">
-                Beds24 remains the source of truth for whether a room can be booked. This site refuses new bookings when the calendar says a room is unavailable (already occupied / closed in Beds24) or when the guest count exceeds that room&apos;s max occupancy. Close or block a room in Beds24 — do not maintain a second inventory here.
+                Availability comes from the local booking store (archived Beds24 + website/admin) and synced Airbnb / Booking.com iCal feeds. This site refuses new bookings when those dates are already taken or when the guest count exceeds that room&apos;s max occupancy.
               </p>
             </div>
 

@@ -244,7 +244,7 @@ export default function AdminDashboard() {
 
   function exportCSV() {
     const rows = visible.map((b) => ({
-      'Beds24 ID': b.id ?? '',
+      'Booking ID': b.id ?? '',
       'First Name': b.firstName,
       'Last Name': b.lastName,
       'Email': b.email,
@@ -256,7 +256,7 @@ export default function AdminDashboard() {
       'Adults': b.numAdult,
       'Children': b.numChild,
       'Channel': channelBadge(b).label,
-      'Beds24 Status': b.status,
+      'Status': b.status,
       'Payment Status': b.intent?.status ?? '',
       'Reference': b.intent?.reference ?? '',
       'Price (USD)': b.price ?? '',
@@ -440,7 +440,7 @@ export default function AdminDashboard() {
                     <th className="text-left px-4 py-3">Dates</th>
                     <th className="text-left px-4 py-3">Guests</th>
                     <th className="text-left px-4 py-3">Channel</th>
-                    <th className="text-left px-4 py-3">Beds24</th>
+                    <th className="text-left px-4 py-3">Booking ID</th>
                     <th className="text-left px-4 py-3">Payment</th>
                     <th className="text-left px-4 py-3">Ref</th>
                     <th className="text-left px-4 py-3">Actions</th>
@@ -561,7 +561,7 @@ export default function AdminDashboard() {
                   <p className="font-semibold text-gray-800">{ROOM_NAMES[b.roomId] ?? `Room ${b.roomId}`}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Beds24 ID</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Booking ID</p>
                   <p className="font-semibold text-gray-800">#{b.id ?? '—'}</p>
                 </div>
                 <div>
@@ -596,7 +596,7 @@ export default function AdminDashboard() {
                 <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Status</p>
                 <div className="flex gap-2 flex-wrap">
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[b.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                    Beds24: {b.status}
+                    Status: {b.status}
                   </span>
                   {b.intent && (
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${PAYMENT_COLORS[b.intent.status] ?? 'bg-gray-100 text-gray-600'}`}>

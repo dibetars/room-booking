@@ -32,8 +32,9 @@ export interface IcalSyncState {
 }
 
 export async function getChannelMode(): Promise<ChannelMode> {
-  const mode = await getSetting<string>(CHANNEL_MODE_KEY, 'beds24');
-  return mode === 'direct' ? 'direct' : 'beds24';
+  // Default is direct (archive + local intents + iCal). Beds24 live API is retired.
+  const mode = await getSetting<string>(CHANNEL_MODE_KEY, 'direct');
+  return mode === 'beds24' ? 'beds24' : 'direct';
 }
 
 export async function getRoomIcalFeeds(): Promise<RoomIcalFeedConfig[]> {
@@ -281,8 +282,10 @@ function stableNumericId(str: string): number {
 }
 
 /**
- * Build unified `Beds24Booking & { intent }` rows directly from Supabase `booking_intents`
- * + synced iCal blocks when running in Direct (no-Beds24) mode.
+ * Build unified booking rows from:
+ * 1. Supabase `booking_intents` (website/admin + imported Beds24 archive)
+ * 2. Synced iCal blocks (Airbnb / Booking.com) — skipped when an intent already
+ *    covers the same room + overlapping dates (archive/local is source of truth)
  */
 export async function getDirectBookingsWithIntents(opts: {
   from: string;
@@ -316,10 +319,30 @@ export async function getDirectBookingsWithIntents(opts: {
       RECONCILE_NEEDED: 'new',
       CANCELLED: 'cancelled',
     };
-    const isAdmin =
-      typeof intent.paystack_raw === 'object' &&
-      intent.paystack_raw !== null &&
-      (intent.paystack_raw as { source?: string }).source === 'admin_manual';
+    const paystackSource =
+      typeof intent.paystack_raw === 'object' && intent.paystack_raw !== null
+        ? (intent.paystack_raw as { source?: string }).source
+        : undefined;
+    const beds24Raw =
+      typeof intent.beds24_raw === 'object' && intent.beds24_raw !== null
+        ? (intent.beds24_raw as Record<string, unknown>)
+        : null;
+
+    const isAdmin = paystackSource === 'admin_manual';
+    const isArchive = paystackSource === 'beds24_archive';
+
+    const archiveReferer =
+      isArchive && beds24Raw
+        ? String(beds24Raw.refererEditable || beds24Raw.referer || beds24Raw.apiSource || 'Beds24 Archive')
+        : null;
+    const archiveChannel =
+      isArchive && beds24Raw?.channel ? String(beds24Raw.channel) : null;
+    const archivePrice =
+      isArchive && typeof beds24Raw?.price === 'number'
+        ? beds24Raw.price
+        : isArchive && beds24Raw?.price != null
+          ? Number(beds24Raw.price) || undefined
+          : undefined;
 
     rows.push({
       id: intent.beds24_booking_id ?? stableNumericId(intent.reference),
@@ -333,16 +356,31 @@ export async function getDirectBookingsWithIntents(opts: {
       email: intent.guest_email,
       phone: intent.guest_phone ?? undefined,
       status: statusMap[intent.status] ?? 'new',
-      price: (room?.rackRateUSD ?? 45) * nights,
-      referer: isAdmin ? 'BokoBoko Admin' : 'BokoBoko Direct',
-      channel: 'direct',
-      info: `Ref: ${intent.reference}`,
+      price: archivePrice ?? (room?.rackRateUSD ?? 45) * nights,
+      referer: archiveReferer ?? (isAdmin ? 'BokoBoko Admin' : 'BokoBoko Direct'),
+      channel: archiveChannel ?? (isAdmin ? 'admin' : 'direct'),
+      info: isArchive
+        ? `Archived Beds24 #${intent.beds24_booking_id}`
+        : `Ref: ${intent.reference}`,
       intent,
     });
   }
 
   for (const ev of synced.events) {
     if (ev.checkOut < opts.from || ev.checkIn > opts.to) continue;
+
+    // Prefer imported archive / local intents over duplicate iCal blocks.
+    const coveredByIntent = intents.some(
+      (i) =>
+        i.room_id === ev.roomId &&
+        i.status !== 'CANCELLED' &&
+        i.status !== 'EXPIRED' &&
+        i.status !== 'PAYMENT_FAILED' &&
+        i.check_in < ev.checkOut &&
+        i.check_out > ev.checkIn
+    );
+    if (coveredByIntent) continue;
+
     const room = ROOMS.find((r) => r.id === ev.roomId);
     const nights = Math.max(
       1,
@@ -369,3 +407,6 @@ export async function getDirectBookingsWithIntents(opts: {
 
   return rows;
 }
+
+/** Alias used by admin/reporting once Beds24 live API is retired. */
+export const getStoreBookings = getDirectBookingsWithIntents;

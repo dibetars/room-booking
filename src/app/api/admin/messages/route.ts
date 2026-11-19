@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getMessages, sendMessage, getBookings } from '@/lib/beds24';
+import { getArchivedMessages } from '@/lib/beds24-archive';
+import { getStoreBookings } from '@/lib/ical';
+import { ROOMS } from '@/lib/rooms';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
@@ -11,16 +13,16 @@ export async function GET(req: NextRequest) {
 
   try {
     const [messages, bookings] = await Promise.all([
-      getMessages(bookingId
-        ? { bookingId: Number(bookingId) }
-        : { startDate, endDate }),
-      bookingId ? Promise.resolve([]) : getBookings({ arrivalFrom: startDate, arrivalTo: endDate }),
+      getArchivedMessages(
+        bookingId
+          ? { bookingId: Number(bookingId) }
+          : { startDate, endDate }
+      ),
+      bookingId ? Promise.resolve([]) : getStoreBookings({ from: startDate, to: endDate }),
     ]);
 
-    // Build a lookup map for booking info
     const bookingMap = new Map(bookings.map((b) => [b.id, b]));
 
-    // Group messages into conversations keyed by bookingId
     const convMap = new Map<number, {
       bookingId: number;
       guestName: string;
@@ -36,6 +38,9 @@ export async function GET(req: NextRequest) {
       const bId = m.bookingId;
       const booking = bookingMap.get(bId);
       const existing = convMap.get(bId);
+      const roomName = booking
+        ? (ROOMS.find((r) => r.id === booking.roomId)?.name ?? String(booking.roomId))
+        : '';
 
       if (!existing) {
         convMap.set(bId, {
@@ -43,7 +48,7 @@ export async function GET(req: NextRequest) {
           guestName: booking
             ? `${booking.firstName} ${booking.lastName}`.trim()
             : `Booking #${bId}`,
-          room: booking ? String(booking.roomId) : '',
+          room: roomName,
           arrival: booking?.arrival ?? '',
           referer: booking?.referer,
           messages: [m],
@@ -60,24 +65,18 @@ export async function GET(req: NextRequest) {
     const conversations = Array.from(convMap.values())
       .sort((a, b) => b.lastTime.localeCompare(a.lastTime));
 
-    return NextResponse.json({ conversations, messages });
+    return NextResponse.json({ conversations, messages, source: 'archive' });
   } catch (err) {
     console.error('[messages GET]', err);
     return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 502 });
   }
 }
 
-export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null);
-  if (!body?.bookingId || !body?.message) {
-    return NextResponse.json({ error: 'bookingId and message required' }, { status: 400 });
-  }
-
-  try {
-    await sendMessage(Number(body.bookingId), String(body.message));
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error('[messages POST]', err);
-    return NextResponse.json({ error: 'Failed to send message' }, { status: 502 });
-  }
+export async function POST() {
+  return NextResponse.json(
+    {
+      error: 'Beds24 messaging is retired. Messages are read-only from the archive. Contact guests by email or the OTA inbox.',
+    },
+    { status: 410 }
+  );
 }

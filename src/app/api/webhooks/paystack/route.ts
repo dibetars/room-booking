@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyWebhookSignature, verifyTransaction } from '@/lib/paystack';
 import { getIntentByRef, updateIntentStatus } from '@/lib/supabase';
-import { updateBookingStatus } from '@/lib/beds24';
 import { sendDirectGuestEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
@@ -62,45 +61,9 @@ async function handleChargeSuccess(reference: string, webhookData: unknown) {
     return;
   }
 
-  // Mark PAID first, then confirm in Beds24 (or confirm directly in direct mode)
+  // Local store is source of truth (Beds24 API retired).
   await updateIntentStatus(reference, 'PAID', { paystack_raw: verified, paystack_status: 'success' });
-
-  if (!intent.beds24_booking_id) {
-    const isDirectMode =
-      typeof intent.beds24_raw === 'object' &&
-      intent.beds24_raw !== null &&
-      (intent.beds24_raw as { mode?: string }).mode === 'direct';
-
-    if (isDirectMode) {
-      await updateIntentStatus(reference, 'CONFIRMED');
-      sendDirectGuestEmail('booking_confirmed', intent);
-      sendDirectGuestEmail('payment_received', intent);
-      return;
-    }
-
-    await updateIntentStatus(reference, 'RECONCILE_NEEDED');
-    return;
-  }
-
-  // Confirm in Beds24 with retry
-  let confirmed = false;
-  for (let attempt = 1; attempt <= 5; attempt++) {
-    try {
-      await updateBookingStatus(intent.beds24_booking_id, 'confirmed');
-      confirmed = true;
-      break;
-    } catch (err) {
-      console.error(`[webhook] Beds24 confirm attempt ${attempt} failed`, err);
-      if (attempt < 5) await new Promise((r) => setTimeout(r, attempt * 2000));
-    }
-  }
-
-  if (confirmed) {
-    await updateIntentStatus(reference, 'CONFIRMED');
-    sendDirectGuestEmail('booking_confirmed', intent);
-    sendDirectGuestEmail('payment_received', intent);
-  } else {
-    await updateIntentStatus(reference, 'RECONCILE_NEEDED');
-    console.error('[webhook] RECONCILE_NEEDED — manual action required for', reference);
-  }
+  await updateIntentStatus(reference, 'CONFIRMED');
+  sendDirectGuestEmail('booking_confirmed', intent);
+  sendDirectGuestEmail('payment_received', intent);
 }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createBooking } from '@/lib/beds24';
 import { createIntent, getSetting } from '@/lib/supabase';
 import { generateReference } from '@/lib/booking-ref';
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
@@ -8,7 +7,6 @@ import { getDiscount, applyDiscount } from '@/lib/discounts';
 import { assertRoomBookable, BookingBlockedError } from '@/lib/occupancy';
 import { sendDirectGuestEmail } from '@/lib/email';
 import { getEffectiveExchangeRate } from '@/lib/exchange-rate';
-import { getChannelMode } from '@/lib/ical';
 
 const schema = z.object({
   roomId: z.number().int().positive(),
@@ -65,48 +63,23 @@ export async function POST(req: NextRequest) {
     );
 
     const reference = generateReference();
-    const [paymentsEnabled, augustWeekendEnabled, GHS_PER_USD, channelMode] = await Promise.all([
+    const [paymentsEnabled, augustWeekendEnabled, GHS_PER_USD] = await Promise.all([
       getSetting<boolean>('payments_enabled', false),
       getSetting<boolean>('august_weekend_discount', true),
       getEffectiveExchangeRate(),
-      getChannelMode(),
     ]);
 
     const discount = getDiscount(checkIn, checkOut, { augustWeekendEnabled });
     const priceUSD = applyDiscount(room.rackRateUSD * nights, discount);
     const priceGHS = priceUSD * GHS_PER_USD;
     const amountPesewas = Math.round(priceGHS * 100);
-
-    // Split full name; fall back to '-' for last name if single-word entry
-    const [firstName, ...rest] = guest.name.trim().split(/\s+/);
-    const lastName = rest.join(' ') || '-';
-
     const discountInfo = discount ? ` [${discount.code} -${discount.discountPct}%]` : '';
 
     if (!paymentsEnabled) {
-      const beds24Result =
-        channelMode === 'direct'
-          ? null
-          : await createBooking({
-              roomId,
-              arrival: checkIn,
-              departure: checkOut,
-              numAdult: adults,
-              numChild: children,
-              firstName,
-              lastName,
-              email: guest.email,
-              phone: guest.phone,
-              status: 'new',
-              price: priceUSD,
-              referer: 'BokoBoko Direct',
-              info: `Ref: ${reference} — manual payment (Paystack disabled)${discountInfo}`,
-            });
-
       const intent = await createIntent({
         reference,
         status: 'PAYMENT_PENDING',
-        beds24_booking_id: beds24Result?.id ?? null,
+        beds24_booking_id: null,
         room_id: roomId,
         check_in: checkIn,
         check_out: checkOut,
@@ -119,7 +92,7 @@ export async function POST(req: NextRequest) {
         currency: 'GHS',
         paystack_status: 'manual',
         expires_at: null,
-        beds24_raw: beds24Result ?? { mode: 'direct' },
+        beds24_raw: { mode: 'direct', note: `manual payment (Paystack disabled)${discountInfo}` },
         paystack_raw: { source: 'manual_mode' },
       });
 
@@ -130,29 +103,10 @@ export async function POST(req: NextRequest) {
 
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
-    const beds24Result =
-      channelMode === 'direct'
-        ? null
-        : await createBooking({
-            roomId,
-            arrival: checkIn,
-            departure: checkOut,
-            numAdult: adults,
-            numChild: children,
-            firstName,
-            lastName,
-            email: guest.email,
-            phone: guest.phone,
-            status: 'request',
-            price: priceUSD,
-            referer: 'BokoBoko Direct',
-            info: `Ref: ${reference}${discountInfo}`,
-          });
-
     await createIntent({
       reference,
       status: 'HELD',
-      beds24_booking_id: beds24Result?.id ?? null,
+      beds24_booking_id: null,
       room_id: roomId,
       check_in: checkIn,
       check_out: checkOut,
@@ -165,7 +119,7 @@ export async function POST(req: NextRequest) {
       currency: 'GHS',
       paystack_status: null,
       expires_at: expiresAt,
-      beds24_raw: beds24Result ?? { mode: 'direct' },
+      beds24_raw: { mode: 'direct', note: discountInfo || null },
       paystack_raw: null,
     });
 
@@ -176,9 +130,6 @@ export async function POST(req: NextRequest) {
 
     if (err instanceof BookingBlockedError) {
       return NextResponse.json({ error: err.message, code: err.code }, { status: err.code === 'ROOM_NOT_FOUND' ? 404 : 409 });
-    }
-    if (message === 'BEDS24_RATE_LIMITED') {
-      return NextResponse.json({ error: 'Service busy, please try again shortly' }, { status: 429 });
     }
     if (message.includes('no longer available') || message.includes('409')) {
       return NextResponse.json({ error: 'These dates are no longer available' }, { status: 409 });

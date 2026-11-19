@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getBookings, createBooking } from '@/lib/beds24';
-import { getIntentsByBeds24Ids, createIntent, getSetting } from '@/lib/supabase';
+import { createIntent, getSetting } from '@/lib/supabase';
 import { generateReference } from '@/lib/booking-ref';
 import { withCache, invalidate } from '@/lib/server-cache';
 import { getDiscount, applyDiscount } from '@/lib/discounts';
 import { assertRoomBookable, BookingBlockedError } from '@/lib/occupancy';
 import { sendDirectGuestEmail } from '@/lib/email';
 import { getEffectiveExchangeRate } from '@/lib/exchange-rate';
-import { getChannelMode, getDirectBookingsWithIntents } from '@/lib/ical';
+import { getStoreBookings } from '@/lib/ical';
 
 const BOOKINGS_TTL = 2 * 60 * 1000; // 2 minutes
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -16,13 +15,6 @@ type DateType = 'staying' | 'checkin' | 'checkout';
 
 function ymd(offsetDays: number): string {
   return new Date(Date.now() + offsetDays * 86400000).toISOString().slice(0, 10);
-}
-
-function beds24Range(from: string, to: string, dateType: DateType) {
-  if (dateType === 'checkout') return { departureFrom: from, departureTo: to };
-  if (dateType === 'checkin') return { arrivalFrom: from, arrivalTo: to };
-  // Staying: overlap — arrived on or before range end, left on or after range start
-  return { arrivalTo: to, departureFrom: from };
 }
 
 function inRange(b: { arrival: string; departure: string }, from: string, to: string, dateType: DateType) {
@@ -52,20 +44,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const bookings = await withCache(cacheKey, BOOKINGS_TTL, async () => {
-      const mode = await getChannelMode();
-      if (mode === 'direct') {
-        const directRows = await getDirectBookingsWithIntents({ from, to });
-        return directRows.filter((b) => inRange(b, from, to, dateType));
-      }
-      const beds24Bookings = await getBookings(beds24Range(from, to, dateType));
-      const matched = beds24Bookings.filter((b) => inRange(b, from, to, dateType));
-      const ids = matched.map((b) => b.id).filter((id): id is number => !!id);
-      const intents = await getIntentsByBeds24Ids(ids);
-      const intentMap = new Map(intents.map((i) => [i.beds24_booking_id, i]));
-      return matched.map((b) => ({
-        ...b,
-        intent: b.id ? (intentMap.get(b.id) ?? null) : null,
-      }));
+      const rows = await getStoreBookings({ from, to });
+      return rows.filter((b) => inRange(b, from, to, dateType));
     });
     return NextResponse.json({ bookings, from, to, dateType });
   } catch (err) {
@@ -106,10 +86,9 @@ export async function POST(req: NextRequest) {
     const room = await assertRoomBookable({ roomId, checkIn, checkOut, adults, children });
 
     const nights = Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000);
-    const [augustWeekendEnabled, GHS_PER_USD, channelMode] = await Promise.all([
+    const [augustWeekendEnabled, GHS_PER_USD] = await Promise.all([
       getSetting<boolean>('august_weekend_discount', true),
       getEffectiveExchangeRate(),
-      getChannelMode(),
     ]);
     const discount = getDiscount(checkIn, checkOut, { augustWeekendEnabled });
     const autoRateUSD = applyDiscount(room.rackRateUSD * nights, discount);
@@ -118,29 +97,10 @@ export async function POST(req: NextRequest) {
     const discountInfo = discount ? ` [${discount.code} -${discount.discountPct}%]` : '';
     const reference = generateReference();
 
-    const beds24Result =
-      channelMode === 'direct'
-        ? null
-        : await createBooking({
-            roomId,
-            arrival: checkIn,
-            departure: checkOut,
-            numAdult: adults,
-            numChild: children,
-            firstName: guestFirstName,
-            lastName: guestLastName,
-            email,
-            phone,
-            status: 'confirmed',
-            price: autoRateUSD,
-            referer: 'BokoBoko Admin',
-            info: notes ? `${reference} — ${notes}${discountInfo}` : `${reference}${discountInfo}`,
-          });
-
     const intent = await createIntent({
       reference,
       status: 'CONFIRMED',
-      beds24_booking_id: beds24Result?.id ?? null,
+      beds24_booking_id: null,
       room_id: roomId,
       check_in: checkIn,
       check_out: checkOut,
@@ -153,7 +113,7 @@ export async function POST(req: NextRequest) {
       currency: 'GHS',
       paystack_status: 'manual',
       expires_at: null,
-      beds24_raw: beds24Result ?? { mode: 'direct' },
+      beds24_raw: { mode: 'direct', notes: notes ? `${notes}${discountInfo}` : discountInfo || null },
       paystack_raw: { source: 'admin_manual' },
     });
 
@@ -161,7 +121,7 @@ export async function POST(req: NextRequest) {
 
     invalidate('bookings:');
     invalidate('analytics:');
-    return NextResponse.json({ reference, beds24Id: beds24Result?.id ?? null, discount: discount ?? undefined });
+    return NextResponse.json({ reference, beds24Id: null, discount: discount ?? undefined });
   } catch (err) {
     if (err instanceof BookingBlockedError) {
       return NextResponse.json({ error: err.message, code: err.code }, { status: err.code === 'ROOM_NOT_FOUND' ? 404 : 409 });

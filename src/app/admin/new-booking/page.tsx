@@ -93,7 +93,7 @@ export default function NewBookingPage() {
       return;
     }
 
-    setSuccess(`Booking created — Beds24 ID: ${data.beds24Id}`);
+    setSuccess(`Booking created — Ref: ${data.reference}`);
     setSubmitting(false);
   }
 
@@ -103,7 +103,7 @@ export default function NewBookingPage() {
       {/* Page header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">New Booking</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Create a manual reservation directly in Beds24</p>
+        <p className="text-sm text-gray-400 mt-0.5">Create a manual reservation in the local booking store</p>
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-5 items-start">
@@ -151,7 +151,7 @@ export default function NewBookingPage() {
               </div>
             </div>
             <p className="text-[11px] text-gray-400">
-              {room.name} holds up to {room.maxOccupancy} guests. Dates already booked in Beds24 cannot be double-booked.
+              {room.name} holds up to {room.maxOccupancy} guests. Dates already booked in the local store or iCal calendars cannot be double-booked.
             </p>
           </div>
 
@@ -239,7 +239,7 @@ export default function NewBookingPage() {
             <div>
               <label className={LABEL}>Internal notes</label>
               <input type="text" value={form.notes}
-                placeholder="Stored in Beds24"
+                placeholder="Stored with the booking"
                 onChange={(e) => set('notes', e.target.value)} className={INPUT} />
             </div>
           </div>

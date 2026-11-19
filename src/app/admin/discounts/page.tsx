@@ -105,7 +105,7 @@ export default function DiscountsPage() {
 
             {enabled && (
               <div className="mt-4 pt-4 border-t border-gray-100 bg-amber-50 rounded-xl p-4 text-sm text-amber-800">
-                <strong>How it works:</strong> When a guest or admin selects a Friday or Saturday check-in date in August 2026, the rack rate is automatically reduced by 15%. The discount is recorded in Beds24 notes and the Supabase intent.
+                <strong>How it works:</strong> When a guest or admin selects a Friday or Saturday check-in date in August 2026, the rack rate is automatically reduced by 15%. The discount is recorded on the booking intent.
               </div>
             )}
           </div>
