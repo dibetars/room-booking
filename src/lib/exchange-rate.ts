@@ -1,15 +1,23 @@
 import { getSetting, setSetting } from '@/lib/supabase';
-import { withCache } from '@/lib/server-cache';
+import { withCache, invalidate } from '@/lib/server-cache';
 
 const FX_CACHE_KEY = 'fx:usd-ghs:v1';
 const FX_CACHE_TTL = 60 * 60 * 1000; // 1 hour in-memory cache
 const FX_SETTINGS_KEY = 'fx_usd_ghs_history';
+export const FX_ADMIN_OVERRIDE_KEY = 'fx_admin_override';
+export const FX_WEEKLY_REPORT_KEY = 'fx_weekly_report_last';
 const FALLBACK_RATE = Number(process.env.GHS_PER_USD ?? process.env.NEXT_PUBLIC_GHS_PER_USD ?? '11.5');
 const MARKUP_WHEN_BELOW_30D = 0.10; // +10% when spot drops below 30-day historical average
 
 // 30-day fixed rate lock (Nov 9, 2026 -> Dec 9, 2026) at 11.5 GHS/USD
 const FIXED_OVERRIDE_RATE = 11.5;
 const FIXED_OVERRIDE_UNTIL = '2026-12-09';
+
+export interface AdminFxOverride {
+  rate: number;
+  note?: string;
+  updatedAt: string;
+}
 
 export interface ExchangeRateInfo {
   base: 'USD';
@@ -18,11 +26,15 @@ export interface ExchangeRateInfo {
   historical30dAvg: number;
   droppedBelowHistorical: boolean;
   markupPct: number;
+  /** Rate actually charged to guests (admin override wins when set). */
   effectiveRate: number;
+  /** Automated rate before any admin override (fixed lock / live+markup / fallback). */
+  automatedRate: number;
   sampleCount: number;
   updatedAt: string;
-  source: 'fixed_30d' | 'live' | 'fallback';
+  source: 'admin_override' | 'fixed_30d' | 'live' | 'fallback';
   fixedUntil?: string;
+  adminOverride: AdminFxOverride | null;
 }
 
 interface StoredFxHistory {
@@ -138,40 +150,103 @@ async function loadAndUpdateHistory(spotRate: number): Promise<Record<string, nu
   return dailyRates;
 }
 
+export async function getAdminFxOverride(): Promise<AdminFxOverride | null> {
+  const raw = await getSetting<AdminFxOverride | null>(FX_ADMIN_OVERRIDE_KEY, null);
+  if (!raw || typeof raw !== 'object') return null;
+  const rate = Number((raw as AdminFxOverride).rate);
+  if (!Number.isFinite(rate) || rate <= 0) return null;
+  return {
+    rate: round2(rate),
+    note: typeof (raw as AdminFxOverride).note === 'string' ? (raw as AdminFxOverride).note : undefined,
+    updatedAt: (raw as AdminFxOverride).updatedAt || new Date().toISOString(),
+  };
+}
+
+/** Set or clear the admin FX override. Pass null to clear and resume automation. */
+export async function setAdminFxOverride(
+  rate: number | null,
+  note?: string
+): Promise<AdminFxOverride | null> {
+  if (rate == null) {
+    await setSetting(FX_ADMIN_OVERRIDE_KEY, null);
+    invalidate('fx:');
+    return null;
+  }
+  if (!Number.isFinite(rate) || rate < 1 || rate > 100) {
+    throw new Error('Override rate must be between 1 and 100 GHS per USD');
+  }
+  const override: AdminFxOverride = {
+    rate: round2(rate),
+    note: note?.trim() || undefined,
+    updatedAt: new Date().toISOString(),
+  };
+  await setSetting(FX_ADMIN_OVERRIDE_KEY, override);
+  invalidate('fx:');
+  return override;
+}
+
+function applyAdminOverride(
+  base: Omit<ExchangeRateInfo, 'effectiveRate' | 'source' | 'adminOverride' | 'automatedRate'> & {
+    source: Exclude<ExchangeRateInfo['source'], 'admin_override'>;
+    automatedRate: number;
+  },
+  adminOverride: AdminFxOverride | null
+): ExchangeRateInfo {
+  if (adminOverride) {
+    return {
+      ...base,
+      automatedRate: base.automatedRate,
+      effectiveRate: adminOverride.rate,
+      source: 'admin_override',
+      adminOverride,
+    };
+  }
+  return {
+    ...base,
+    effectiveRate: base.automatedRate,
+    adminOverride: null,
+  };
+}
+
 /**
- * Returns full exchange rate details:
- * - While within the 30-day fixed rate window (through `FIXED_OVERRIDE_UNTIL`),
- *   locks `effectiveRate` to `11.5` while still recording the live 30-day history in the background.
- * - After the 30-day fixed window, uses live USD->GHS spot rate and applies +10% markup
- *   only when `spotRate < historical30dAvg`.
+ * Returns full exchange rate details.
+ * Live FX history is always updated. Effective charged rate priority:
+ * 1. Admin override (if set)
+ * 2. Fixed 30-day lock (while active)
+ * 3. Live spot + optional +10% when below 30-day average
  */
 export async function getExchangeRateInfo(): Promise<ExchangeRateInfo> {
   return withCache(FX_CACHE_KEY, FX_CACHE_TTL, async () => {
     const today = ymdDaysAgo(0);
     const isFixedWindowActive = today <= FIXED_OVERRIDE_UNTIL;
-    const liveSpot = await fetchLiveSpotUsdToGhs();
+    const [liveSpot, adminOverride] = await Promise.all([
+      fetchLiveSpotUsdToGhs(),
+      getAdminFxOverride(),
+    ]);
 
     if (!liveSpot) {
-      const rate = isFixedWindowActive ? FIXED_OVERRIDE_RATE : round2(FALLBACK_RATE);
-      return {
-        base: 'USD',
-        quote: 'GHS',
-        spotRate: rate,
-        historical30dAvg: rate,
-        droppedBelowHistorical: false,
-        markupPct: 0,
-        effectiveRate: rate,
-        sampleCount: 0,
-        updatedAt: new Date().toISOString(),
-        source: isFixedWindowActive ? 'fixed_30d' : 'fallback',
-        fixedUntil: isFixedWindowActive ? FIXED_OVERRIDE_UNTIL : undefined,
-      };
+      const automatedRate = isFixedWindowActive ? FIXED_OVERRIDE_RATE : round2(FALLBACK_RATE);
+      return applyAdminOverride(
+        {
+          base: 'USD',
+          quote: 'GHS',
+          spotRate: automatedRate,
+          historical30dAvg: automatedRate,
+          droppedBelowHistorical: false,
+          markupPct: 0,
+          automatedRate,
+          sampleCount: 0,
+          updatedAt: new Date().toISOString(),
+          source: isFixedWindowActive ? 'fixed_30d' : 'fallback',
+          fixedUntil: isFixedWindowActive ? FIXED_OVERRIDE_UNTIL : undefined,
+        },
+        adminOverride
+      );
     }
 
     const dailyRates = await loadAndUpdateHistory(liveSpot);
     const start30d = ymdDaysAgo(30);
 
-    // Compute 30-day historical average from prior days in window (or all if only today exists)
     const priorEntries = Object.entries(dailyRates)
       .filter(([d, v]) => d >= start30d && d < today && typeof v === 'number' && v > 0)
       .map(([, v]) => v);
@@ -184,40 +259,45 @@ export async function getExchangeRateInfo(): Promise<ExchangeRateInfo> {
     const avgRounded = round2(historical30dAvg);
 
     if (isFixedWindowActive) {
-      return {
+      return applyAdminOverride(
+        {
+          base: 'USD',
+          quote: 'GHS',
+          spotRate: spotRounded,
+          historical30dAvg: avgRounded,
+          droppedBelowHistorical: false,
+          markupPct: 0,
+          automatedRate: FIXED_OVERRIDE_RATE,
+          sampleCount: historicalValues.length,
+          updatedAt: new Date().toISOString(),
+          source: 'fixed_30d',
+          fixedUntil: FIXED_OVERRIDE_UNTIL,
+        },
+        adminOverride
+      );
+    }
+
+    const droppedBelowHistorical = spotRounded < avgRounded;
+    const markupPct = droppedBelowHistorical ? 10 : 0;
+    const automatedRate = droppedBelowHistorical
+      ? round2(liveSpot * (1 + MARKUP_WHEN_BELOW_30D))
+      : spotRounded;
+
+    return applyAdminOverride(
+      {
         base: 'USD',
         quote: 'GHS',
         spotRate: spotRounded,
         historical30dAvg: avgRounded,
-        droppedBelowHistorical: false,
-        markupPct: 0,
-        effectiveRate: FIXED_OVERRIDE_RATE,
+        droppedBelowHistorical,
+        markupPct,
+        automatedRate,
         sampleCount: historicalValues.length,
         updatedAt: new Date().toISOString(),
-        source: 'fixed_30d',
-        fixedUntil: FIXED_OVERRIDE_UNTIL,
-      };
-    }
-
-    // Only charge 10% more when current spot rate drops below the 30-day historical rate
-    const droppedBelowHistorical = spotRounded < avgRounded;
-    const markupPct = droppedBelowHistorical ? 10 : 0;
-    const effectiveRate = droppedBelowHistorical
-      ? round2(liveSpot * (1 + MARKUP_WHEN_BELOW_30D))
-      : spotRounded;
-
-    return {
-      base: 'USD',
-      quote: 'GHS',
-      spotRate: spotRounded,
-      historical30dAvg: avgRounded,
-      droppedBelowHistorical,
-      markupPct,
-      effectiveRate,
-      sampleCount: historicalValues.length,
-      updatedAt: new Date().toISOString(),
-      source: 'live',
-    };
+        source: 'live',
+      },
+      adminOverride
+    );
   });
 }
 
@@ -225,4 +305,99 @@ export async function getExchangeRateInfo(): Promise<ExchangeRateInfo> {
 export async function getEffectiveExchangeRate(): Promise<number> {
   const info = await getExchangeRateInfo();
   return info.effectiveRate;
+}
+
+export interface FxWeeklySnapshot {
+  weekKey: string;
+  periodFrom: string;
+  periodTo: string;
+  spotRate: number;
+  historical30dAvg: number;
+  automatedRate: number;
+  effectiveRate: number;
+  source: ExchangeRateInfo['source'];
+  adminOverride: AdminFxOverride | null;
+  weekHigh: number | null;
+  weekLow: number | null;
+  weekAvg: number | null;
+  changeVsWeekAgoPct: number | null;
+  sampleCount: number;
+}
+
+function isoWeekKey(d = new Date()): string {
+  // ISO week: Thursday-based year + week number
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${date.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+}
+
+/** Build a weekly FX fluctuation snapshot from stored history + current info. */
+export async function getFxWeeklySnapshot(): Promise<FxWeeklySnapshot> {
+  const info = await getExchangeRateInfo();
+  const stored = await getSetting<StoredFxHistory>(FX_SETTINGS_KEY, { dailyRates: {} });
+  const dailyRates = stored?.dailyRates ?? {};
+
+  const periodTo = ymdDaysAgo(0);
+  const periodFrom = ymdDaysAgo(6);
+  const weekAgo = ymdDaysAgo(7);
+
+  const weekValues = Object.entries(dailyRates)
+    .filter(([d, v]) => d >= periodFrom && d <= periodTo && typeof v === 'number' && v > 0)
+    .map(([, v]) => v);
+
+  const weekHigh = weekValues.length ? Math.max(...weekValues) : null;
+  const weekLow = weekValues.length ? Math.min(...weekValues) : null;
+  const weekAvg = weekValues.length
+    ? round2(weekValues.reduce((s, v) => s + v, 0) / weekValues.length)
+    : null;
+
+  const weekAgoRate = dailyRates[weekAgo];
+  const changeVsWeekAgoPct =
+    typeof weekAgoRate === 'number' && weekAgoRate > 0
+      ? round2(((info.spotRate - weekAgoRate) / weekAgoRate) * 100)
+      : null;
+
+  return {
+    weekKey: isoWeekKey(),
+    periodFrom,
+    periodTo,
+    spotRate: info.spotRate,
+    historical30dAvg: info.historical30dAvg,
+    automatedRate: info.automatedRate,
+    effectiveRate: info.effectiveRate,
+    source: info.source,
+    adminOverride: info.adminOverride,
+    weekHigh: weekHigh != null ? round2(weekHigh) : null,
+    weekLow: weekLow != null ? round2(weekLow) : null,
+    weekAvg,
+    changeVsWeekAgoPct,
+    sampleCount: weekValues.length,
+  };
+}
+
+/**
+ * Send the weekly FX report at most once per ISO week (idempotent).
+ * Returns whether an email was sent.
+ */
+export async function maybeSendWeeklyFxReport(
+  sendFn: (snapshot: FxWeeklySnapshot) => Promise<boolean>
+): Promise<{ sent: boolean; weekKey: string; reason?: string }> {
+  const snapshot = await getFxWeeklySnapshot();
+  const last = await getSetting<{ weekKey?: string } | null>(FX_WEEKLY_REPORT_KEY, null);
+  if (last?.weekKey === snapshot.weekKey) {
+    return { sent: false, weekKey: snapshot.weekKey, reason: 'already_sent' };
+  }
+
+  const ok = await sendFn(snapshot);
+  if (ok) {
+    await setSetting(FX_WEEKLY_REPORT_KEY, {
+      weekKey: snapshot.weekKey,
+      sentAt: new Date().toISOString(),
+      snapshot,
+    });
+  }
+  return { sent: ok, weekKey: snapshot.weekKey, reason: ok ? undefined : 'send_failed' };
 }

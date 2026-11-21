@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getExpiredHeldIntents, updateIntentStatus } from '@/lib/supabase';
 import { syncAllRoomIcalFeeds } from '@/lib/ical';
-import { getExchangeRateInfo } from '@/lib/exchange-rate';
+import { getExchangeRateInfo, maybeSendWeeklyFxReport } from '@/lib/exchange-rate';
+import { sendFxWeeklyReportEmail } from '@/lib/email';
 
 function isValidCronSecret(provided: string | null): boolean {
   const expected = process.env.CRON_SECRET;
@@ -30,6 +31,15 @@ export async function GET(req: NextRequest) {
     }),
   ]);
 
+  // Mondays (UTC): send weekly FX fluctuation email once per ISO week
+  let fxWeekly: { sent: boolean; weekKey: string; reason?: string } | null = null;
+  if (new Date().getUTCDay() === 1) {
+    fxWeekly = await maybeSendWeeklyFxReport(sendFxWeeklyReportEmail).catch((err) => {
+      console.error('[cron] FX weekly report failed', err);
+      return { sent: false, weekKey: '', reason: 'error' };
+    });
+  }
+
   const expired = await getExpiredHeldIntents();
   let cancelled = 0;
 
@@ -46,5 +56,6 @@ export async function GET(req: NextRequest) {
     cancelled,
     checked: expired.length,
     icalSyncedEvents: icalSync?.events.length ?? 0,
+    fxWeekly,
   });
 }

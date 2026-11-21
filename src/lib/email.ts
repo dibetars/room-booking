@@ -2,6 +2,7 @@ import { getSetting } from '@/lib/supabase';
 import { Resend } from 'resend';
 import type { BookingIntent } from '@/types';
 import { ROOMS } from '@/lib/rooms';
+import type { FxWeeklySnapshot } from '@/lib/exchange-rate';
 import {
   renderEmail,
   templateSettingKey,
@@ -159,6 +160,104 @@ export interface RateChangeAlert {
 export function sendRateChangeAlertEmail(change: RateChangeAlert): void {
   void sendRateChangeAlertEmailAsync(change);
 }
+
+export async function sendFxWeeklyReportEmail(snapshot: FxWeeklySnapshot): Promise<boolean> {
+  const cfg = configured();
+  if (!cfg) {
+    console.warn('[email] FX weekly report skipped — Resend not configured');
+    return false;
+  }
+
+  const to =
+    process.env.ADMIN_EMAIL?.trim() ||
+    process.env.RATE_CHANGE_NOTIFY_EMAIL?.trim() ||
+    'dibe@tarsusstudios.com';
+
+  const changeLabel =
+    snapshot.changeVsWeekAgoPct == null
+      ? 'n/a'
+      : `${snapshot.changeVsWeekAgoPct >= 0 ? '+' : ''}${snapshot.changeVsWeekAgoPct.toFixed(2)}%`;
+
+  const sourceLabel =
+    snapshot.source === 'admin_override'
+      ? `Admin override (GH₵ ${snapshot.adminOverride?.rate.toFixed(2)})`
+      : snapshot.source === 'fixed_30d'
+        ? 'Fixed 30-day lock'
+        : snapshot.source === 'live'
+          ? 'Live automated FX'
+          : 'Fallback rate';
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 560px; margin: 0 auto; color: #333;">
+      <h2 style="color: #2d5a27; margin-bottom: 8px;">Weekly USD → GHS rate report</h2>
+      <p style="color: #666; font-size: 14px; margin-top: 0;">
+        ${snapshot.periodFrom} → ${snapshot.periodTo} · Week ${snapshot.weekKey}
+      </p>
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+        <tr>
+          <td style="padding: 8px 0; color: #666;">Live spot</td>
+          <td style="padding: 8px 0; font-weight: 600;">GH₵ ${snapshot.spotRate.toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #666;">30-day average</td>
+          <td style="padding: 8px 0;">GH₵ ${snapshot.historical30dAvg.toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #666;">Automated rate</td>
+          <td style="padding: 8px 0;">GH₵ ${snapshot.automatedRate.toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #666;">Effective (charged)</td>
+          <td style="padding: 8px 0; font-weight: 700; color: #2d5a27;">GH₵ ${snapshot.effectiveRate.toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #666;">Source</td>
+          <td style="padding: 8px 0;">${sourceLabel}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #666;">Week high / low</td>
+          <td style="padding: 8px 0;">
+            ${snapshot.weekHigh != null ? `GH₵ ${snapshot.weekHigh.toFixed(2)}` : '—'}
+            /
+            ${snapshot.weekLow != null ? `GH₵ ${snapshot.weekLow.toFixed(2)}` : '—'}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #666;">Week average</td>
+          <td style="padding: 8px 0;">${snapshot.weekAvg != null ? `GH₵ ${snapshot.weekAvg.toFixed(2)}` : '—'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #666;">Change vs 7 days ago</td>
+          <td style="padding: 8px 0; font-weight: 600;">${changeLabel}</td>
+        </tr>
+      </table>
+      <p style="font-size: 13px; color: #555;">
+        Live FX continues to run in the background. Change the charged rate anytime in
+        <strong>Admin → Settings → USD → GHS Exchange Rate</strong>.
+      </p>
+      <p style="font-size: 12px; color: #999; margin-top: 20px;">BokoBoko Admin · book.bokoboko.org</p>
+    </div>
+  `.trim();
+
+  try {
+    const { error } = await cfg.resend.emails.send({
+      from: cfg.from,
+      to,
+      subject: `[BokoBoko] Weekly FX: spot GH₵ ${snapshot.spotRate.toFixed(2)} (${changeLabel} vs last week)`,
+      html,
+      replyTo: cfg.replyTo,
+    });
+    if (error) {
+      console.error('[email] FX weekly Resend error', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[email] FX weekly send failed', err);
+    return false;
+  }
+}
+
 
 async function sendRateChangeAlertEmailAsync(change: RateChangeAlert): Promise<void> {
   const cfg = configured();

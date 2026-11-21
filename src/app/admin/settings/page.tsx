@@ -87,62 +87,196 @@ function PaymentsSection() {
 
 function ExchangeRateSection() {
   const [fx, setFx] = useState<ExchangeRateInfo | null>(null);
+  const [overrideInput, setOverrideInput] = useState('');
+  const [note, setNote] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
-  useEffect(() => {
+  function loadFx() {
     fetch('/api/exchange-rate')
       .then((r) => r.json())
-      .then((d) => setFx(d))
+      .then((d: ExchangeRateInfo) => {
+        setFx(d);
+        setOverrideInput(d.adminOverride ? String(d.adminOverride.rate) : '');
+        setNote(d.adminOverride?.note ?? '');
+      })
       .catch(() => {});
+  }
+
+  useEffect(() => {
+    loadFx();
   }, []);
+
+  async function saveOverride() {
+    const rate = Number(overrideInput);
+    if (!Number.isFinite(rate) || rate < 1 || rate > 100) {
+      setError('Enter a rate between 1 and 100 GHS per USD');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    setMessage('');
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fxAdminOverrideRate: rate, fxAdminOverrideNote: note || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+      if (data.exchangeRate) setFx(data.exchangeRate);
+      else loadFx();
+      setMessage(`Override saved — guests are charged GH₵ ${rate.toFixed(2)} / $1. Live FX still updates in the background.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function clearOverride() {
+    setSaving(true);
+    setError('');
+    setMessage('');
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fxAdminOverrideRate: null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Clear failed');
+      if (data.exchangeRate) {
+        setFx(data.exchangeRate);
+        setOverrideInput('');
+        setNote('');
+      } else loadFx();
+      setMessage('Override cleared — automated live FX is charging again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Clear failed');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h2 className="font-bold text-gray-800">USD → GHS Exchange Rate</h2>
+            {fx?.source === 'admin_override' && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                Admin override GH₵ {fx.effectiveRate.toFixed(2)}
+              </span>
+            )}
             {fx?.source === 'fixed_30d' && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
                 Locked at GH₵ {fx.effectiveRate.toFixed(2)} until {fx.fixedUntil}
               </span>
             )}
-            {fx?.source !== 'fixed_30d' && fx?.droppedBelowHistorical && (
+            {fx?.source === 'live' && fx.droppedBelowHistorical && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
                 +10% Buffer Active
               </span>
             )}
-            {fx && fx.source !== 'fixed_30d' && !fx.droppedBelowHistorical && (
+            {fx?.source === 'live' && !fx.droppedBelowHistorical && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
                 Spot Rate Active
               </span>
             )}
           </div>
-          <p className="text-sm text-gray-500 mt-1 max-w-md">
-            Pulls live USD→GHS daily and compares against the 30-day historical average. A <strong>+10% buffer</strong> is charged only when the live spot rate drops below the 30-day historical rate.
+          <p className="text-sm text-gray-500 mt-1 max-w-xl">
+            Live USD→GHS keeps updating daily (with +10% when spot is below the 30-day average).
+            You can overwrite the <strong>charged</strong> rate below without stopping automation —
+            clear the override anytime to resume. A weekly fluctuation email goes to the admin email every Monday.
           </p>
         </div>
         {!fx && <span className="text-xs text-gray-400 shrink-0">Loading…</span>}
       </div>
 
       {fx && (
-        <div className="grid grid-cols-3 gap-3 border-t border-gray-100 pt-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 border-t border-gray-100 pt-4">
           <div className="bg-gray-50 rounded-xl p-3">
-            <p className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Live Spot Rate</p>
+            <p className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Live Spot</p>
             <p className="text-lg font-bold text-gray-800 mt-0.5">GH₵ {fx.spotRate.toFixed(2)}</p>
           </div>
           <div className="bg-gray-50 rounded-xl p-3">
             <p className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">30-Day Avg</p>
             <p className="text-lg font-bold text-gray-800 mt-0.5">GH₵ {fx.historical30dAvg.toFixed(2)}</p>
           </div>
-          <div className="bg-[#f0f5ee] rounded-xl p-3">
-            <p className="text-[11px] uppercase tracking-wide text-[#2d5a27] font-semibold">Effective Rate Charged</p>
-            <p className="text-lg font-bold text-[#2d5a27] mt-0.5">
-              GH₵ {fx.effectiveRate.toFixed(2)}
-              {fx.markupPct > 0 && <span className="text-xs font-medium ml-1">(+{fx.markupPct}%)</span>}
+          <div className="bg-gray-50 rounded-xl p-3">
+            <p className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Automated</p>
+            <p className="text-lg font-bold text-gray-800 mt-0.5">
+              GH₵ {(fx.automatedRate ?? fx.effectiveRate).toFixed(2)}
+              {fx.markupPct > 0 && fx.source !== 'admin_override' && (
+                <span className="text-xs font-medium ml-1">(+{fx.markupPct}%)</span>
+              )}
             </p>
+          </div>
+          <div className="bg-[#f0f5ee] rounded-xl p-3">
+            <p className="text-[11px] uppercase tracking-wide text-[#2d5a27] font-semibold">Charged</p>
+            <p className="text-lg font-bold text-[#2d5a27] mt-0.5">GH₵ {fx.effectiveRate.toFixed(2)}</p>
           </div>
         </div>
       )}
+
+      <div className="border-t border-gray-100 pt-4 space-y-3">
+        <h3 className="text-sm font-semibold text-gray-800">Admin override</h3>
+        <div className="flex flex-wrap gap-3 items-end">
+          <label className="block">
+            <span className="text-xs text-gray-500">GHS per USD</span>
+            <input
+              type="number"
+              step="0.01"
+              min="1"
+              max="100"
+              value={overrideInput}
+              onChange={(e) => setOverrideInput(e.target.value)}
+              placeholder={fx ? String(fx.automatedRate ?? fx.effectiveRate) : '11.50'}
+              className="mt-1 block w-36 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="block flex-1 min-w-[180px]">
+            <span className="text-xs text-gray-500">Note (optional)</span>
+            <input
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="e.g. Hold rate for Easter weekend"
+              className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={saveOverride}
+            disabled={saving || !overrideInput}
+            className="px-3.5 py-2 rounded-lg bg-[#2d5a27] text-white text-sm font-semibold hover:bg-[#245020] disabled:opacity-50"
+          >
+            {saving ? 'Saving…' : 'Save override'}
+          </button>
+          {fx?.adminOverride && (
+            <button
+              type="button"
+              onClick={clearOverride}
+              disabled={saving}
+              className="px-3.5 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              Clear override
+            </button>
+          )}
+        </div>
+        {fx?.adminOverride && (
+          <p className="text-xs text-purple-700">
+            Override active since {new Date(fx.adminOverride.updatedAt).toLocaleString('en-GH')}
+            {fx.adminOverride.note ? ` — ${fx.adminOverride.note}` : ''}.
+            Automated rate would be GH₵ {(fx.automatedRate ?? fx.spotRate).toFixed(2)}.
+          </p>
+        )}
+        {message && <p className="text-sm text-green-700">{message}</p>}
+        {error && <p className="text-sm text-red-600">{error}</p>}
+      </div>
     </div>
   );
 }

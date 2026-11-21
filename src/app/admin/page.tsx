@@ -363,11 +363,13 @@ export default function AdminDashboard() {
             </p>
             {fx && (
               <p className="text-[11px] text-gray-400 mt-1">
-                {fx.source === 'fixed_30d'
-                  ? `30d lock until ${fx.fixedUntil} · Spot ${fx.spotRate.toFixed(2)} · 30d avg ${fx.historical30dAvg.toFixed(2)}`
-                  : fx.droppedBelowHistorical
-                    ? `Spot ${fx.spotRate.toFixed(2)} < 30d avg ${fx.historical30dAvg.toFixed(2)} (+${fx.markupPct}%)`
-                    : `Spot ${fx.spotRate.toFixed(2)} ≥ 30d avg ${fx.historical30dAvg.toFixed(2)} (0% markup)`}
+                {fx.source === 'admin_override'
+                  ? `Admin override · Auto ${(fx.automatedRate ?? fx.spotRate).toFixed(2)} · Spot ${fx.spotRate.toFixed(2)}`
+                  : fx.source === 'fixed_30d'
+                    ? `30d lock until ${fx.fixedUntil} · Spot ${fx.spotRate.toFixed(2)} · 30d avg ${fx.historical30dAvg.toFixed(2)}`
+                    : fx.droppedBelowHistorical
+                      ? `Spot ${fx.spotRate.toFixed(2)} < 30d avg ${fx.historical30dAvg.toFixed(2)} (+${fx.markupPct}%)`
+                      : `Spot ${fx.spotRate.toFixed(2)} ≥ 30d avg ${fx.historical30dAvg.toFixed(2)} (0% markup)`}
               </p>
             )}
           </a>
